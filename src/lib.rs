@@ -6,3 +6,4 @@ extern crate waiter_codegen;
 pub use waiter_codegen::{component, provides};
 
 pub use waiter_core::container::*;
+pub use waiter_core::deferred::*;

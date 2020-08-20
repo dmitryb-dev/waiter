@@ -19,6 +19,7 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
                     let component = std::rc::Rc::new(#comp_name::__waiter_create(self));
+                    #comp_name::__waiter_inject_deferred(self, component.clone());
                     self.components.insert(type_id, component);
                 }
                 let any = self.components.get(&type_id)
