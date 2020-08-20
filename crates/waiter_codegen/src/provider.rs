@@ -1,12 +1,19 @@
-use syn::{ItemStruct, ItemImpl, Type};
+use syn::{ItemStruct, ItemImpl, Type, GenericParam};
 use proc_macro::TokenStream;
 
 pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
     let comp_name = &component.ident;
-    let comp_generics = &component.generics;
+
+    let comp_generics = component.generics;
+    let provider_generics = if comp_generics.params.is_empty() {
+        quote::quote! { <PROFILE> }
+    } else {
+        let existed_generics: Vec<&GenericParam> = comp_generics.params.iter().collect();
+        quote::quote! { <#(#existed_generics),*, PROFILE> }
+    };
 
     let result = quote::quote! {
-        impl #comp_generics Provider<#comp_name #comp_generics> for Container<profiles::Default> {
+        impl #provider_generics Provider<#comp_name #comp_generics> for Container<PROFILE> {
             fn get_ref(&mut self) -> &#comp_name #comp_generics {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
@@ -37,7 +44,7 @@ pub fn generate_interface_provider_impl(impl_block: ItemImpl) -> TokenStream {
     };
 
     let result = quote::quote! {
-        impl Provider<dyn #interface> for Container<profiles::Default> {
+        impl<P> Provider<dyn #interface> for Container<P> {
             fn get_ref(&mut self) -> &(dyn #interface + 'static) {
                 return Provider::<#comp_name>::get_ref(self);
             }

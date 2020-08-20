@@ -21,7 +21,7 @@ pub fn generate_component_impl(component: ItemStruct) -> TokenStream {
 
     let result = quote::quote! {
         impl #comp_generics waiter::Component for #comp_name #comp_generics {
-            fn __waiter_create(container: &mut Container<profiles::Default>) -> Self {
+            fn __waiter_create<P>(container: &mut Container<P>) -> Self {
                 #dependencies_code
                 return #comp_name #factory_code;
             }

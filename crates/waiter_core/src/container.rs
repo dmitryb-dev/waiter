@@ -5,10 +5,11 @@ use std::marker::PhantomData;
 
 pub mod profiles {
     pub struct Default;
+    pub struct Dev;
 }
 
 pub trait Component {
-    fn __waiter_create(container: &mut Container<profiles::Default>) -> Self;
+    fn __waiter_create<T>(container: &mut Container<T>) -> Self;
 }
 
 pub trait Provider<T: ?Sized> {
