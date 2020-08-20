@@ -35,7 +35,7 @@ impl<'a> Interface for Comp<'a> {
     }
 }
 
-#[provides]
+#[provides(profiles::Dev)]
 impl<'a> Interface2 for Comp<'a> {
     fn int2(&self) {
         println!("i2 {:?}", self);
@@ -51,6 +51,12 @@ fn main() {
     comp.int();
     comp.int2();
 
+    let comp = Provider::<dyn Interface>::get_ref(&mut container);
+    comp.int();
+
+
+
+    let mut container = Container::<profiles::Dev>::new();
     let comp = Provider::<dyn Interface>::get_ref(&mut container);
     comp.int();
 

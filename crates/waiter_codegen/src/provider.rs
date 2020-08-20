@@ -1,5 +1,6 @@
-use syn::{ItemStruct, ItemImpl, Type, GenericParam};
 use proc_macro::TokenStream;
+
+use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type};
 
 pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
     let comp_name = &component.ident;
@@ -33,7 +34,7 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
     return TokenStream::from(result);
 }
 
-pub fn generate_interface_provider_impl(impl_block: ItemImpl) -> TokenStream {
+pub fn generate_interface_provider_impl(profiles: Vec<&Path>, impl_block: ItemImpl) -> TokenStream {
     let (_, interface, _) = impl_block.trait_
         .expect("#[provides] can be used only on impl blocks for traits");
 
@@ -43,11 +44,19 @@ pub fn generate_interface_provider_impl(impl_block: ItemImpl) -> TokenStream {
         panic!("Failed to create provider")
     };
 
-    let result = quote::quote! {
-        impl<P> Provider<dyn #interface> for Container<P> {
-            fn get_ref(&mut self) -> &(dyn #interface + 'static) {
-                return Provider::<#comp_name>::get_ref(self);
-            }
+    let provider_body = quote::quote! {{
+        fn get_ref(&mut self) -> &(dyn #interface + 'static) {
+            Provider::<#comp_name>::get_ref(self)
+        }
+    }};
+
+    let result = if profiles.is_empty() {
+        quote::quote! {
+            impl<P> Provider<dyn #interface> for Container<P> #provider_body
+        }
+    } else {
+        quote::quote! {
+            #(impl Provider<dyn #interface> for Container<#profiles> #provider_body)*
         }
     };
 
