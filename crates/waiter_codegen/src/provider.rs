@@ -15,18 +15,29 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
 
     let result = quote::quote! {
         impl #provider_generics Provider<#comp_name #comp_generics> for Container<PROFILE> {
-            fn get_ref(&mut self) -> &#comp_name #comp_generics {
+            fn get(&mut self) -> std::rc::Rc<#comp_name #comp_generics> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
-                    let component = Box::new(#comp_name::__waiter_create(self));
+                    let component = std::rc::Rc::new(#comp_name::__waiter_create(self));
                     self.components.insert(type_id, component);
                 }
                 let any = self.components.get(&type_id)
                     .unwrap();
 
-                return any
-                    .downcast_ref::<#comp_name>()
+                return any.clone()
+                    .downcast::<#comp_name>()
                     .unwrap();
+            }
+            fn get_ref(&mut self) -> &#comp_name #comp_generics {
+                  unsafe {
+                    std::rc::Rc::as_ptr(&Provider::<#comp_name>::get(self))
+                        .as_ref()
+                        .unwrap()
+                }
+            }
+
+            fn create(&mut self) -> Box<#comp_name #comp_generics> {
+                Box::new(#comp_name::__waiter_create(self))
             }
         }
     };
@@ -45,8 +56,14 @@ pub fn generate_interface_provider_impl(profiles: Vec<&Path>, impl_block: ItemIm
     };
 
     let provider_body = quote::quote! {{
+        fn get(&mut self) -> std::rc::Rc<dyn #interface> {
+            Provider::<#comp_name>::get(self)
+        }
         fn get_ref(&mut self) -> &(dyn #interface + 'static) {
             Provider::<#comp_name>::get_ref(self)
+        }
+        fn create(&mut self) -> Box<dyn #interface> {
+            Provider::<#comp_name>::create(self)
         }
     }};
 

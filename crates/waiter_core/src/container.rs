@@ -13,14 +13,14 @@ pub trait Component {
 }
 
 pub trait Provider<T: ?Sized> {
-//    fn get(&mut self) -> Rc<T>;
+    fn get(&mut self) -> Rc<T>;
     fn get_ref(&mut self) -> &T;
-//    fn create(&self) -> Box<T>;
+    fn create(&mut self) -> Box<T>;
 }
 
 pub struct Container<P> {
     profile: PhantomData<P>,
-    pub components: HashMap<TypeId, Box<dyn Any>>
+    pub components: HashMap<TypeId, Rc<dyn Any>>
 }
 
 impl<T> Container<T> {
