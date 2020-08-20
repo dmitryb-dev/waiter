@@ -1,9 +1,8 @@
-use std::any::{Any, TypeId};
+use std::any::{Any, TypeId, type_name};
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::marker::PhantomData;
 use config::{Config, Environment, File};
-use std::env;
 
 pub mod profiles {
     pub struct Default;
@@ -33,19 +32,10 @@ impl<T> Container<T> {
         config.merge(File::with_name("config/default").required(false))
             .expect("Failed to read default config file");
 
-        let mut profile: Option<String> = None;
-        let env_profile = env::var("PROFILE");
-        if env_profile.is_ok() {
-            profile = Some(env_profile.unwrap_or_default());
-        } else {
-            let file_profile = config.get_str("profile");
-            if file_profile.is_ok() {
-                profile = Some(file_profile.unwrap());
-            }
-        }
-        if profile.is_some() {
-            config.merge(File::with_name(&format!("config/{}", profile.unwrap())).required(false))
-                .expect("Failed to read profile specify config file");
+        let profile = type_name::<T>().to_lowercase();
+        if profile.ne(&"default".to_owned()) {
+            config.merge(File::with_name(&format!("config/{}", profile)).required(false))
+                .expect(format!("Failed to read {} config file", profile).as_str());
         }
 
         config.merge(Environment::new())

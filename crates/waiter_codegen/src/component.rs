@@ -44,7 +44,7 @@ pub fn generate_component_impl(component: ItemStruct) -> TokenStream {
 
 fn generate_inject_dependencies_tuple(dep_number: usize) -> TokenStream2 {
     let dependencies: Vec<Ident> = (0..dep_number)
-        .map(|i| Ident::new(&format!("dep_{}", i)[..], Span::call_site()))
+        .map(|i| Ident::new(format!("dep_{}", i).as_str(), Span::call_site()))
         .collect();
 
     return quote::quote! {
@@ -54,7 +54,7 @@ fn generate_inject_dependencies_tuple(dep_number: usize) -> TokenStream2 {
 
 fn generate_inject_dependencies_named(fields: Vec<&Field>) -> TokenStream2 {
     let dependencies: Vec<Ident> = (0..fields.len())
-        .map(|i| Ident::new(&format!("dep_{}", i)[..], Span::call_site()))
+        .map(|i| Ident::new(format!("dep_{}", i).as_str(), Span::call_site()))
         .collect();
 
     let field_names: Vec<&Ident> = fields.iter()
@@ -78,12 +78,12 @@ fn generate_inject_deferred(fields: Vec<&Field>, is_tuple: bool) -> TokenStream2
             return false;
         })
         .map(|(i, f)| if is_tuple {
-            (i, Ident::new(&format!("{}", i)[..], Span::call_site()))
+            (i, Ident::new(format!("{}", i).as_str(), Span::call_site()))
         } else {
             (i, f.ident.clone().unwrap())
         })
         .map(|(i, field_name)| {
-            let dependency = Ident::new(&format!("dep_{}", i)[..], Span::call_site());
+            let dependency = Ident::new(format!("dep_{}", i).as_str(), Span::call_site());
             quote::quote! { #field_name.init(#dependency); }
         })
         .collect();
