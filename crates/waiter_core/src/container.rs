@@ -29,11 +29,11 @@ pub struct Container<P> {
 impl<T> Container<T> {
     pub fn new() -> Container<T> {
         let mut config = Config::new();
-        config.merge(File::with_name("config/default").required(false))
-            .expect("Failed to read default config file");
+        config.merge(File::with_name("config/default.toml").required(false))
+            .expect("Failed to read default.toml config file");
 
         let profile = type_name::<T>().to_lowercase();
-        if profile.ne(&"default".to_owned()) {
+        if profile.ne(&"default.toml".to_owned()) {
             config.merge(File::with_name(&format!("config/{}", profile)).required(false))
                 .expect(format!("Failed to read {} config file", profile).as_str());
         }

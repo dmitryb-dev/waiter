@@ -29,7 +29,11 @@ struct Comp<'a> {
     dependency_ref: &'a Dependency,
     dependency_box: Box<Dependency>,
     dependency_def_rc: Deferred<Rc<Dependency>>,
-    dependency_def_box: Deferred<Box<Dependency>>
+    dependency_def_box: Deferred<Box<Dependency>>,
+    int_prop: i64,
+    float_prop: f64,
+    str_prop: String,
+    bool_prop: bool
 }
 
 impl<'a>  Comp<'a>  {
@@ -39,7 +43,7 @@ impl<'a>  Comp<'a>  {
         self.dependency_box.dep();
         self.dependency_def_rc.dep();
         self.dependency_def_box.dep();
-        println!("comp int0");
+        println!("comp int0, {}, {}, {}, {}", self.int_prop, self.float_prop, self.str_prop, self.bool_prop);
     }
 }
 

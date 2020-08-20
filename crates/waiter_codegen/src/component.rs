@@ -119,30 +119,30 @@ fn generate_dependency_create_code(typ: &Type, pos: usize) -> TokenStream2 {
             };
         }
         Type::Path(path_type) => {
-            let ptr_type = path_type.path.to_token_stream().to_string();
+            let typ = path_type.path.to_token_stream().to_string();
 
-            if ptr_type.starts_with("std :: rc :: Rc <") {
+            if typ.starts_with("std :: rc :: Rc <") {
                 let referenced_type = &path_type.path.segments[2].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::get(container);
                 }
             }
-            if ptr_type.starts_with("Rc <") {
+            if typ.starts_with("Rc <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::get(container);
                 }
             }
-            if ptr_type.starts_with("Box <") {
+            if typ.starts_with("Box <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::create(container);
                 }
             }
-            if ptr_type.contains("Deferred <") {
-                let deferred_arg = if ptr_type.starts_with("waiter :: Deferred <") {
+            if typ.contains("Deferred <") {
+                let deferred_arg = if typ.starts_with("waiter :: Deferred <") {
                     &path_type.path.segments[1]
-                } else if ptr_type.starts_with("Deferred <") {
+                } else if typ.starts_with("Deferred <") {
                     &path_type.path.segments[0]
                 } else {
                     panic!("Incorrect Deferred type: wrong crate")
@@ -154,9 +154,30 @@ fn generate_dependency_create_code(typ: &Type, pos: usize) -> TokenStream2 {
                     let #dep_var_name = waiter::Deferred::#referenced_type::new();
                 }
             }
+            if typ.eq(&"Config".to_owned()) || typ.eq(&"config :: Config".to_owned()) {
+                return quote::quote! {
+                    let #dep_var_name = container.config.clone();
+                }
+            }
+
+            if typ.eq(&"i64".to_owned()) || typ.eq(&"f64".to_owned())
+                || typ.eq(&"String".to_owned()) || typ.eq(&"bool".to_owned()) {
+                let prop_name = "lol";
+                let config_method = match typ.as_str() {
+                    "i64" => Ident::new("get_int", Span::call_site()),
+                    "f64" => Ident::new("get_float", Span::call_site()),
+                    "String" => Ident::new("get_str", Span::call_site()),
+                    "bool" => Ident::new("get_bool", Span::call_site()),
+                    _ => panic!()
+                };
+                return quote::quote! {
+                    let #dep_var_name = container.config.#config_method(#prop_name)
+                        .expect(format!("Property {} not found", #prop_name).as_str());
+                }
+            }
             return Error::new(
                 typ.span(),
-                "Only &, Rc, Deferred, Component and #[prop(\"name\"] i64/f64/String/bool can be injected"
+                "Only &, Rc, Deferred, Component, Config and #[prop(\"name\"] i64/f64/String/bool can be injected"
             ).to_compile_error()
         }
         _ => Error::new(
