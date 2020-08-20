@@ -28,14 +28,14 @@ impl<'a> Comp<'a> {
     }
 }
 
-//#[provides]
+#[provides]
 impl<'a> Interface for Comp<'a> {
     fn int(&self) {
         println!("i1 {:?}", self);
     }
 }
 
-//#[provides]
+#[provides]
 impl<'a> Interface2 for Comp<'a> {
     fn int2(&self) {
         println!("i2 {:?}", self);
@@ -51,9 +51,9 @@ fn main() {
     comp.int();
     comp.int2();
 
-//    let comp = Provider::<dyn Interface>::get(&mut container);
-//    comp.int();
-//
-//    let comp = Provider::<dyn Interface2>::get(&mut container);
-//    comp.int2();
+    let comp = Provider::<dyn Interface>::get_ref(&mut container);
+    comp.int();
+
+    let comp = Provider::<dyn Interface2>::get_ref(&mut container);
+    comp.int2();
 }

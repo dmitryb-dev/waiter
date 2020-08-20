@@ -1,4 +1,4 @@
-use syn::ItemStruct;
+use syn::{ItemStruct, ItemImpl, Type};
 use proc_macro::TokenStream;
 
 pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
@@ -19,6 +19,27 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
                 return any
                     .downcast_ref::<#comp_name>()
                     .unwrap();
+            }
+        }
+    };
+
+    return TokenStream::from(result);
+}
+
+pub fn generate_interface_provider_impl(impl_block: ItemImpl) -> TokenStream {
+    let (_, interface, _) = impl_block.trait_
+        .expect("#[provides] can be used only on impl blocks for traits");
+
+    let comp_name = if let Type::Path(comp_path) = *impl_block.self_ty {
+        comp_path.path.segments.first().unwrap().ident.clone()
+    } else {
+        panic!("Failed to create provider")
+    };
+
+    let result = quote::quote! {
+        impl Provider<dyn #interface> for Container<profiles::Default> {
+            fn get_ref(&mut self) -> &(dyn #interface + 'static) {
+                return Provider::<#comp_name>::get_ref(self);
             }
         }
     };
