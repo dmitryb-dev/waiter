@@ -156,7 +156,7 @@ fn generate_dependency_create_code(typ: &Type, pos: usize) -> TokenStream2 {
             }
             return Error::new(
                 typ.span(),
-                "Only &, Rc, Deferred, Component and #[prop(\"name\"] number/string can be injected"
+                "Only &, Rc, Deferred, Component and #[prop(\"name\"] i64/f64/String/bool can be injected"
             ).to_compile_error()
         }
         _ => Error::new(

@@ -1,3 +1,6 @@
 [package]
 name = "waiter_core"
 version = "1.0.0"
+
+[dependencies]
+config = "0.9"
