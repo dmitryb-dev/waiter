@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="RUST_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_codegen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_codegen/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_codegen/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_codegen/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_core/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/waiter_core/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/crates/waiter_codegen/target" />
+      <excludeFolder url="file://$MODULE_DIR$/crates/waiter_core/target" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
