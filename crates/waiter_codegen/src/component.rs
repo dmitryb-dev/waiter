@@ -126,32 +126,38 @@ fn generate_dependency_create_code(typ: &Type, pos: usize) -> TokenStream2 {
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::get(container);
                 }
-            } else if ptr_type.starts_with("Rc <") {
+            }
+            if ptr_type.starts_with("Rc <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::get(container);
                 }
-            } else if ptr_type.starts_with("Box <") {
+            }
+            if ptr_type.starts_with("Box <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::create(container);
                 }
-            } else if ptr_type.starts_with("waiter :: Deferred <") {
-                let referenced_type = &path_type.path.segments[1].arguments;
-                return quote::quote! {
-                    let #dep_var_name = waiter::Deferred::#referenced_type::new();
-                }
-            } else if ptr_type.starts_with("Deferred <") {
-                let referenced_type = &path_type.path.segments[0].arguments;
-                return quote::quote! {
-                    let #dep_var_name = waiter::Deferred::#referenced_type::new();
-                }
-            } else {
-                return Error::new(
-                    typ.span(),
-                    "Only &, Rc, Component and #[prop(\"name\"] number/string can be injected"
-                ).to_compile_error()
             }
+            if ptr_type.contains("Deferred <") {
+                let deferred_arg = if ptr_type.starts_with("waiter :: Deferred <") {
+                    &path_type.path.segments[1]
+                } else if ptr_type.starts_with("Deferred <") {
+                    &path_type.path.segments[0]
+                } else {
+                    panic!("Incorrect Deferred type: wrong crate")
+                };
+
+                let referenced_type = &deferred_arg.arguments;
+
+                return quote::quote! {
+                    let #dep_var_name = waiter::Deferred::#referenced_type::new();
+                }
+            }
+            return Error::new(
+                typ.span(),
+                "Only &, Rc, Deferred, Component and #[prop(\"name\"] number/string can be injected"
+            ).to_compile_error()
         }
         _ => Error::new(
             typ.span(),

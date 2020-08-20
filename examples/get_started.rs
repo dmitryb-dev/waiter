@@ -29,7 +29,6 @@ struct Comp<'a> {
     dependency_ref: &'a Dependency,
     dependency_box: Box<Dependency>,
     dependency_def_rc: Deferred<Rc<Dependency>>,
-//    dependency_def_ref: Deferred<&'a Dependency>,
     dependency_def_box: Deferred<Box<Dependency>>
 }
 
