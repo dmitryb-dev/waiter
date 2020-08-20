@@ -44,11 +44,16 @@ impl<'a> Interface2 for Comp<'a> {
 
 
 fn main() {
-    let mut container = Container::new();
+    let mut container = Container::<profiles::Default>::new();
 
-    let comp = Provider::<dyn Interface>::get(&mut container);
+    let comp = Provider::<Comp>::get_ref(&mut container);
+    comp.int0();
     comp.int();
-
-    let comp = Provider::<dyn Interface2>::get(&mut container);
     comp.int2();
+
+//    let comp = Provider::<dyn Interface>::get(&mut container);
+//    comp.int();
+//
+//    let comp = Provider::<dyn Interface2>::get(&mut container);
+//    comp.int2();
 }
