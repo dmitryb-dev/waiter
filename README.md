@@ -128,8 +128,10 @@ fn main() {
 
 Just define property named `profile` and use `inject!` macro:
 
-```
-let comp = inject!(Comp: profiles::Default, profiles::Dev);
+```rust
+fn main() {
+    let comp = inject!(Comp: profiles::Default, profiles::Dev);
+}
 ```
 
 ## Factory functions:
