@@ -14,7 +14,7 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
     };
 
     let result = quote::quote! {
-        impl #provider_generics Provider<#comp_name #comp_generics> for Container<PROFILE> {
+        impl #provider_generics waiter::Provider<#comp_name #comp_generics> for Container<PROFILE> {
             fn get(&mut self) -> std::rc::Rc<#comp_name #comp_generics> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
@@ -58,23 +58,23 @@ pub fn generate_interface_provider_impl(profiles: Vec<&Path>, impl_block: ItemIm
 
     let provider_body = quote::quote! {{
         fn get(&mut self) -> std::rc::Rc<dyn #interface> {
-            Provider::<#comp_name>::get(self)
+            waiter::Provider::<#comp_name>::get(self)
         }
         fn get_ref(&mut self) -> &(dyn #interface + 'static) {
-            Provider::<#comp_name>::get_ref(self)
+            waiter::Provider::<#comp_name>::get_ref(self)
         }
         fn create(&mut self) -> Box<dyn #interface> {
-            Provider::<#comp_name>::create(self)
+            waiter::Provider::<#comp_name>::create(self)
         }
     }};
 
     let result = if profiles.is_empty() {
         quote::quote! {
-            impl<P> Provider<dyn #interface> for Container<P> #provider_body
+            impl<P> waiter::Provider<dyn #interface> for Container<P> #provider_body
         }
     } else {
         quote::quote! {
-            #(impl Provider<dyn #interface> for Container<#profiles> #provider_body)*
+            #(impl waiter::Provider<dyn #interface> for Container<#profiles> #provider_body)*
         }
     };
 

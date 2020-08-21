@@ -238,8 +238,8 @@ name = "waiter"
 version = "1.0.0"
 dependencies = [
  "config",
+ "regex",
  "waiter_codegen",
- "waiter_core",
 ]
 
 [[package]]
@@ -249,15 +249,6 @@ dependencies = [
  "quote",
  "regex",
  "syn",
- "waiter_core",
-]
-
-[[package]]
-name = "waiter_core"
-version = "1.0.0"
-dependencies = [
- "config",
- "regex",
 ]
 
 [[package]]

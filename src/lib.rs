@@ -1,10 +1,17 @@
 extern crate proc_macro;
-
-extern crate waiter_core;
+extern crate config;
+extern crate regex;
 extern crate waiter_codegen;
+
+
+pub mod container;
+pub mod deferred;
+
+#[macro_use]
+pub mod inject;
 
 pub use waiter_codegen::*;
 
-pub use waiter_core::container::*;
-pub use waiter_core::inject;
-pub use waiter_core::deferred::*;
+pub use container::*;
+pub use deferred::*;
+pub use inject::*;

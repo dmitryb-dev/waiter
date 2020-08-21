@@ -112,7 +112,7 @@ fn generate_dependency_create_code(field: Option<&Field>, type_: &Type, pos: usi
             let referenced_type = &type_ref.elem;
             return quote::quote! {
                 let #dep_var_name = unsafe {
-                    (Provider::<#referenced_type>::get_ref(container) as *const #referenced_type)
+                    (waiter::Provider::<#referenced_type>::get_ref(container) as *const #referenced_type)
                         .as_ref()
                         .unwrap()
                 };
@@ -125,19 +125,19 @@ fn generate_dependency_create_code(field: Option<&Field>, type_: &Type, pos: usi
             if type_name.starts_with("std :: rc :: Rc <") {
                 let referenced_type = &path_type.path.segments[2].arguments;
                 return quote::quote! {
-                    let #dep_var_name = Provider::#referenced_type::get(container);
+                    let #dep_var_name = waiter::Provider::#referenced_type::get(container);
                 }
             }
             if type_name.starts_with("Rc <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
-                    let #dep_var_name = Provider::#referenced_type::get(container);
+                    let #dep_var_name = waiter::Provider::#referenced_type::get(container);
                 }
             }
             if type_name.starts_with("Box <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
-                    let #dep_var_name = Provider::#referenced_type::create(container);
+                    let #dep_var_name = waiter::Provider::#referenced_type::create(container);
                 }
             }
             if type_name.contains("Deferred <") {

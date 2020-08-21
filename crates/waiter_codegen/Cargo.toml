@@ -3,7 +3,6 @@ name = "waiter_codegen"
 version = "1.0.0"
 
 [dependencies]
-waiter_core = { path = "../waiter_core" }
 quote = "1.0.7"
 regex = "1.3.9"
 

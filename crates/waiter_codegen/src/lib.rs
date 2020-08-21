@@ -1,5 +1,4 @@
 extern crate proc_macro;
-extern crate waiter_core;
 extern crate syn;
 extern crate regex;
 

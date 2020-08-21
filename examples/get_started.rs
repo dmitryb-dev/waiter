@@ -1,10 +1,7 @@
 extern crate waiter;
-extern crate waiter_core;
 extern crate config;
 
 use waiter::*;
-use waiter::Provider;
-use waiter_core::deferred::Deferred;
 use std::rc::Rc;
 use config::Config;
 

@@ -6,10 +6,10 @@ macro_rules! inject {
             println!("Using profile: {}", parsed_profile);
             $(
                 if profile_name::<$profile>().eq(&parsed_profile) {
-                    Provider::<$comp>::get(&mut Container::<$profile>::new())
+                    waiter::Provider::<$comp>::get(&mut Container::<$profile>::new())
                 } else
             )*
-            { Provider::<$comp>::get(&mut Container::<waiter::profiles::Default>::new()) }
+            { waiter::Provider::<$comp>::get(&mut Container::<waiter::profiles::Default>::new()) }
         }
     }
 }
