@@ -18,8 +18,7 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
             fn get(&mut self) -> std::rc::Rc<#comp_name #comp_generics> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
-                    let component = std::rc::Rc::new(#comp_name::__waiter_create(self));
-                    #comp_name::__waiter_inject_deferred(self, component.clone());
+                    let component = Rc::<#comp_name>::from(Provider::<#comp_name>::create(self));
                     self.components.insert(type_id, component);
                 }
                 let any = self.components.get(&type_id)
@@ -38,7 +37,9 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
             }
 
             fn create(&mut self) -> Box<#comp_name #comp_generics> {
-                Box::new(#comp_name::__waiter_create(self))
+                let mut component = Box::new(#comp_name::__waiter_create(self));
+                #comp_name::__waiter_inject_deferred(self, &component);
+                return component;
             }
         }
     };
