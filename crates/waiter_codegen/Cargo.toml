@@ -5,7 +5,7 @@ description = "Macro for Waiter DI"
 repository = "https://github.com/dmitryb-dev/waiter"
 license = "MIT"
 readme = "../../README.md"
-authors = "dmitryb.dev@gmail.com"
+authors = "Dmitry Barannik"
 
 [dependencies]
 quote = "1.0.7"
