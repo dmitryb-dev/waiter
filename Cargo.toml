@@ -2,7 +2,7 @@
 name = "waiter"
 version = "1.0.0"
 description = "Dependency injection"
-keywords = ["dependency injection", "inversion of control", "di", "ioc"]
+keywords = [ "dependency-injection", "inversion-of-control", "di", "ioc"]
 repository = "https://github.com/dmitryb-dev/waiter"
 license = "MIT"
 readme = "README.md"
