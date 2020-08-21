@@ -32,12 +32,12 @@ pub struct Container<P> {
 impl<P> Container<P> {
     pub fn new() -> Container<P> {
         let mut config = Config::new();
-        config.merge(File::with_name("config/default"))
+        config.merge(File::with_name("config/default").required(false))
             .expect("Failed to read default config file");
 
         let profile = profile_name::<P>();
         if profile.ne(&"default".to_string()) {
-            config.merge(File::with_name(&format!("config/{}", profile)).required(true))
+            config.merge(File::with_name(&format!("config/{}", profile)).required(false))
                 .expect(format!("Failed to read {} config file", profile).as_str());
         }
 
