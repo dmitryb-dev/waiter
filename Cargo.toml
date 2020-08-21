@@ -6,6 +6,7 @@ keywords = ["dependency injection", "inversion of control", "di", "ioc"]
 repository = "https://github.com/dmitryb-dev/waiter"
 license = "MIT"
 readme = "README.md"
+authors = "dmitryb.dev@gmail.com"
 
 [workspace]
 members = [ "crates/*" ]
