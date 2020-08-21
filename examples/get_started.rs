@@ -1,7 +1,7 @@
-extern crate waiter;
+extern crate waiter_di;
 extern crate config;
 
-use waiter::*;
+use waiter_di::*;
 use std::rc::Rc;
 use config::Config;
 

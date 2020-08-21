@@ -109,7 +109,7 @@ struct Comp<'a> {
 
 ## Profiles
 
-You can use predefined profiles from `waiter::profile" or create custom:
+You can use predefined profiles from `waiter_di::profile" or create custom:
 
 ```rust
 struct CustomProfile;

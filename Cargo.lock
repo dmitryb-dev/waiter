@@ -234,21 +234,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "914b1a6776c4c929a602fafd8bc742e06365d4bcbe48c30f9cca5824f70dc9dd"
 
 [[package]]
-name = "waiter"
-version = "1.0.0"
-dependencies = [
- "config",
- "regex",
- "waiter_codegen",
-]
-
-[[package]]
 name = "waiter_codegen"
 version = "1.0.0"
 dependencies = [
  "quote",
  "regex",
  "syn",
+]
+
+[[package]]
+name = "waiter_di"
+version = "1.0.0"
+dependencies = [
+ "config",
+ "regex",
+ "waiter_codegen",
 ]
 
 [[package]]
