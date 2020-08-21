@@ -77,7 +77,7 @@ pub fn generate_component_provider_impl(
             fn get(&mut self) -> std::rc::Rc<#comp_name #comp_generics> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
-                    let component = Rc::<#comp_name>::from(Provider::<#comp_name>::create(self));
+                    let component = std::rc::Rc::<#comp_name>::from(Provider::<#comp_name>::create(self));
                     self.components.insert(type_id, component);
                 }
                 let any = self.components.get(&type_id)

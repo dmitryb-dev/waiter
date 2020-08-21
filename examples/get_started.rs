@@ -2,8 +2,8 @@ extern crate waiter_di;
 extern crate config;
 
 use waiter_di::*;
-use std::rc::Rc;
 use config::Config;
+use std::rc::Rc;
 
 trait Interface {
     fn int(&self);
