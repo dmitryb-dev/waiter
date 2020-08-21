@@ -1,4 +1,4 @@
-#Dependency injection for Rust
+# Dependency injection for Rust
 
 See examples/get_started.rs for list of available injection options
 
