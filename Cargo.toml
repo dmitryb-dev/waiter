@@ -1,6 +1,6 @@
 [package]
 name = "waiter_di"
-version = "1.0.0"
+version = "1.1.0"
 description = "Dependency injection"
 keywords = [ "dependency-injection", "inversion-of-control", "di", "ioc"]
 repository = "https://github.com/dmitryb-dev/waiter"

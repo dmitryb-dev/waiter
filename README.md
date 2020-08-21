@@ -134,4 +134,11 @@ let comp = inject!(Comp: profiles::Default, profiles::Dev);
 
 ## Factory functions:
 
-// TODO
+If you can't use `#[component]` annotation, use factory function instead:
+
+```rust
+#[provides]
+fn create_dependency<P>(_container: &mut Container<P>) -> Dependency {
+    Dependency
+}
+```

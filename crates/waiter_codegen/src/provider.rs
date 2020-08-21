@@ -1,20 +1,79 @@
 use proc_macro::TokenStream;
 
-use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type};
+use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType};
+use syn::export::{TokenStream2, ToTokens};
+use std::ops::Deref;
 
-pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
-    let comp_name = &component.ident;
+pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
+    let comp_name = component.ident;
 
-    let comp_generics = component.generics;
-    let provider_generics = if comp_generics.params.is_empty() {
-        quote::quote! { <PROFILE> }
-    } else {
-        let existed_generics: Vec<&GenericParam> = comp_generics.params.iter().collect();
-        quote::quote! { <#(#existed_generics),*, PROFILE> }
+    let create_component_code = quote::quote! {
+        Box::new(#comp_name::__waiter_create(self));
+        #comp_name::__waiter_inject_deferred(self, &component)
     };
 
-    let result = quote::quote! {
-        impl #provider_generics waiter_di::Provider<#comp_name #comp_generics> for Container<PROFILE> {
+    generate_component_provider_impl(
+        comp_name.to_token_stream(),
+        component.generics.params.iter().collect(),
+        vec!(),
+        create_component_code
+    )
+}
+
+pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn) -> TokenStream {
+    let comp_name = if let ReturnType::Type(_, type_) = &factory.sig.output {
+        if let Type::Path(type_path) = type_.deref() {
+            type_path.path.segments.first().unwrap().ident.to_token_stream()
+        } else {
+            panic!("Unsupported return type for factory function {}", factory.sig.to_token_stream().to_string())
+        }
+    } else {
+        panic!("Return type must be specified for factory function {}", factory.sig.to_token_stream().to_string())
+    };
+
+    let fn_name = factory.sig.ident;
+
+    let create_component_code = quote::quote! {
+        Box::new(#fn_name(self))
+    };
+
+    generate_component_provider_impl(
+        comp_name,
+        factory.sig.generics.params.iter()
+            .filter(|p| if let GenericParam::Lifetime(_) = p { true } else { false })
+            .collect(),
+        profiles,
+        create_component_code
+    )
+}
+
+pub fn generate_component_provider_impl(
+    comp_name: TokenStream2,
+    comp_generics: Vec<&GenericParam>,
+    profiles: Vec<&Path>,
+    create_component_code: TokenStream2
+) -> TokenStream {
+    let (profiles, provider_generics) = if profiles.is_empty() {
+        let generic_profile = quote::quote! { PROFILE };
+
+        let provider_generics = if comp_generics.is_empty() {
+            quote::quote! { <PROFILE> }
+        } else {
+            quote::quote! { <#(#comp_generics),*, PROFILE> }
+        };
+
+        (vec!(generic_profile), provider_generics)
+    } else {
+        let profiles = profiles.iter()
+            .map(|p| p.to_token_stream())
+            .collect();
+        (profiles, quote::quote! { <#(#comp_generics),*> })
+    };
+
+    let comp_generics = quote::quote! { <#(#comp_generics),*> };
+
+    let result = quote::quote! {#(
+        impl #provider_generics waiter_di::Provider<#comp_name #comp_generics> for Container<#profiles> {
             fn get(&mut self) -> std::rc::Rc<#comp_name #comp_generics> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
@@ -37,12 +96,11 @@ pub fn generate_component_provider_impl(component: ItemStruct) -> TokenStream {
             }
 
             fn create(&mut self) -> Box<#comp_name #comp_generics> {
-                let mut component = Box::new(#comp_name::__waiter_create(self));
-                #comp_name::__waiter_inject_deferred(self, &component);
+                let mut component = #create_component_code;
                 return component;
             }
         }
-    };
+    )*};
 
     return TokenStream::from(result);
 }

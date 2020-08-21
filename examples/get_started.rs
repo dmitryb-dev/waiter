@@ -13,13 +13,17 @@ trait Interface2 {
     fn int2(&self);
 }
 
-#[component]
 struct Dependency;
 
 impl Dependency {
     fn dep(&self) {
         println!("Dep");
     }
+}
+
+#[provides]
+fn create_dependency<P>(_container: &mut Container<P>) -> Dependency {
+    Dependency
 }
 
 #[component]
