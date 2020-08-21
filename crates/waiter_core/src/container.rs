@@ -1,12 +1,15 @@
 use std::any::{Any, TypeId, type_name};
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::env;
 use std::marker::PhantomData;
 use config::{Config, Environment, File};
+use regex::Regex;
 
 pub mod profiles {
     pub struct Default;
     pub struct Dev;
+    pub struct Test;
 }
 
 pub trait Component {
@@ -26,15 +29,15 @@ pub struct Container<P> {
     pub components: HashMap<TypeId, Rc<dyn Any>>
 }
 
-impl<T> Container<T> {
-    pub fn new() -> Container<T> {
+impl<P> Container<P> {
+    pub fn new() -> Container<P> {
         let mut config = Config::new();
-        config.merge(File::with_name("config/default.toml").required(false))
-            .expect("Failed to read default.toml config file");
+        config.merge(File::with_name("config/default"))
+            .expect("Failed to read default config file");
 
-        let profile = type_name::<T>().to_lowercase();
-        if profile.ne(&"default.toml".to_owned()) {
-            config.merge(File::with_name(&format!("config/{}", profile)).required(false))
+        let profile = profile_name::<P>();
+        if profile.ne(&"default".to_string()) {
+            config.merge(File::with_name(&format!("config/{}", profile)).required(true))
                 .expect(format!("Failed to read {} config file", profile).as_str());
         }
 
@@ -43,8 +46,27 @@ impl<T> Container<T> {
 
         Container {
             config,
-            profile: PhantomData::<T>,
+            profile: PhantomData::<P>,
             components: HashMap::new()
         }
     }
+}
+
+pub fn parse_profile() -> String {
+    let mut config = Config::new();
+
+    config.merge(File::with_name("config/default").required(false))
+        .expect("Failed to read default config file");
+
+    return env::var("PROFILE")
+        .or(config.get_str("profile"))
+        .unwrap_or("default".to_string())
+}
+
+pub fn profile_name<T>() -> String {
+    let profile_type_name = type_name::<T>().to_lowercase();
+
+    Regex::new(r".*::").unwrap()
+        .replace(profile_type_name.as_str(), "")
+        .to_string()
 }

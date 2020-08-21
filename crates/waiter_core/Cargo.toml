@@ -4,3 +4,4 @@ version = "1.0.0"
 
 [dependencies]
 config = "0.9"
+regex = "1.3.9"

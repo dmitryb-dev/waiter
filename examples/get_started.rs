@@ -85,4 +85,8 @@ fn main() {
 
     let comp = Provider::<dyn Interface2>::get_ref(&mut container);
     comp.int2();
+
+
+    let comp = inject!(Comp: profiles::Default, profiles::Dev);
+    comp.comp();
 }

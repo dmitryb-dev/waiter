@@ -257,6 +257,7 @@ name = "waiter_core"
 version = "1.0.0"
 dependencies = [
  "config",
+ "regex",
 ]
 
 [[package]]
