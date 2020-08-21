@@ -8,3 +8,4 @@ members = [ "crates/*" ]
 [dependencies]
 waiter_core = { path = "crates/waiter_core" }
 waiter_codegen = { path = "crates/waiter_codegen" }
+config = "0.9"

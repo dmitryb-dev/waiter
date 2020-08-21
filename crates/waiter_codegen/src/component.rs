@@ -1,5 +1,5 @@
 use proc_macro::{TokenStream};
-use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument};
+use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, LitStr};
 use syn::export::{TokenStream2, Span, ToTokens};
 use syn::spanned::Spanned;
 
@@ -96,7 +96,7 @@ fn generate_inject_deferred(fields: Vec<&Field>, is_tuple: bool) -> TokenStream2
 fn generate_dependencies_create_code(fields: Vec<&Field>) -> TokenStream2 {
     let dep_code_list: Vec<TokenStream2> = fields.iter()
         .enumerate()
-        .map(|(i, f)| generate_dependency_create_code(&f.ty, i))
+        .map(|(i, f)| generate_dependency_create_code(Some(f), &f.ty, i))
         .collect();
 
     return quote::quote! {
@@ -104,10 +104,10 @@ fn generate_dependencies_create_code(fields: Vec<&Field>) -> TokenStream2 {
     }
 }
 
-fn generate_dependency_create_code(typ: &Type, pos: usize) -> TokenStream2 {
+fn generate_dependency_create_code(field: Option<&Field>, type_: &Type, pos: usize) -> TokenStream2 {
     let dep_var_name = quote::format_ident!("dep_{}", pos);
 
-    match typ {
+    match type_ {
         Type::Reference(type_ref) => {
             let referenced_type = &type_ref.elem;
             return quote::quote! {
@@ -118,31 +118,32 @@ fn generate_dependency_create_code(typ: &Type, pos: usize) -> TokenStream2 {
                 };
             };
         }
-        Type::Path(path_type) => {
-            let typ = path_type.path.to_token_stream().to_string();
 
-            if typ.starts_with("std :: rc :: Rc <") {
+        Type::Path(path_type) => {
+            let type_name = path_type.path.to_token_stream().to_string();
+
+            if type_name.starts_with("std :: rc :: Rc <") {
                 let referenced_type = &path_type.path.segments[2].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::get(container);
                 }
             }
-            if typ.starts_with("Rc <") {
+            if type_name.starts_with("Rc <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::get(container);
                 }
             }
-            if typ.starts_with("Box <") {
+            if type_name.starts_with("Box <") {
                 let referenced_type = &path_type.path.segments[0].arguments;
                 return quote::quote! {
                     let #dep_var_name = Provider::#referenced_type::create(container);
                 }
             }
-            if typ.contains("Deferred <") {
-                let deferred_arg = if typ.starts_with("waiter :: Deferred <") {
+            if type_name.contains("Deferred <") {
+                let deferred_arg = if type_name.starts_with("waiter :: Deferred <") {
                     &path_type.path.segments[1]
-                } else if typ.starts_with("Deferred <") {
+                } else if type_name.starts_with("Deferred <") {
                     &path_type.path.segments[0]
                 } else {
                     panic!("Incorrect Deferred type: wrong crate")
@@ -154,37 +155,66 @@ fn generate_dependency_create_code(typ: &Type, pos: usize) -> TokenStream2 {
                     let #dep_var_name = waiter::Deferred::#referenced_type::new();
                 }
             }
-            if typ.eq(&"Config".to_owned()) || typ.eq(&"config :: Config".to_owned()) {
+            if type_name.eq(&"Config".to_string()) || type_name.eq(&"config :: Config".to_string()) {
                 return quote::quote! {
                     let #dep_var_name = container.config.clone();
                 }
             }
 
-            if typ.eq(&"i64".to_owned()) || typ.eq(&"f64".to_owned())
-                || typ.eq(&"String".to_owned()) || typ.eq(&"bool".to_owned()) {
-                let prop_name = "lol";
-                let config_method = match typ.as_str() {
-                    "i64" => Ident::new("get_int", Span::call_site()),
-                    "f64" => Ident::new("get_float", Span::call_site()),
-                    "String" => Ident::new("get_str", Span::call_site()),
-                    "bool" => Ident::new("get_bool", Span::call_site()),
-                    _ => panic!()
+            let prop_name = field.and_then(|f| get_prop_name(f));
+            if prop_name.is_some() {
+                let prop_name = prop_name.unwrap();
+
+                let config_safe_number_cast_method = match type_name.as_str() {
+                    "i128" | "u128" => Some(Ident::new("get_int", Span::call_site())),
+                    _ => None
                 };
-                return quote::quote! {
-                    let #dep_var_name = container.config.#config_method(#prop_name)
-                        .expect(format!("Property {} not found", #prop_name).as_str());
+                if config_safe_number_cast_method.is_some() {
+                    return quote::quote! {
+                        let #dep_var_name = #path_type::from(
+                             container.config.#config_safe_number_cast_method(#prop_name)
+                                .expect(format!("Property {} not found", #prop_name).as_str())
+                        );
+                    }
+                }
+
+                let (config_unsafe_number_cast_method, config_ret_type) = match type_name.as_str() {
+                    "i8" | "i16" | "i32" | "isize" | "u8" | "u16" | "u32" | "u64" | "u128" | "usize" =>
+                        (Some(Ident::new("get_int", Span::call_site())), quote::quote! { i64 }),
+                    _ => (None, quote::quote! {})
+                };
+                if config_unsafe_number_cast_method.is_some() {
+                    return quote::quote! {
+                        let #dep_var_name: #path_type = <#path_type as std::convert::TryFrom<#config_ret_type>>::try_from(
+                             container.config.#config_unsafe_number_cast_method(#prop_name)
+                                .expect(format!("Property {} not found", #prop_name).as_str())
+                        ).expect(format!("Can't parse prop {} as {}", #prop_name, #type_name).as_str());
+                    }
+                }
+
+                let config_method = match type_name.as_str() {
+                    "i64" => Some(Ident::new("get_int", Span::call_site())),
+                    "f64" | "f32" => Some(Ident::new("get_float", Span::call_site())),
+                    "String" => Some(Ident::new("get_str", Span::call_site())),
+                    "bool" => Some(Ident::new("get_bool", Span::call_site())),
+                    _ => None
+                };
+                if config_method.is_some() {
+                    return quote::quote! {
+                        let #dep_var_name = container.config.#config_method(#prop_name)
+                            .expect(format!("Property {} not found", #prop_name).as_str())
+                            as #path_type;
+                    }
                 }
             }
-            return Error::new(
-                typ.span(),
-                "Only &, Rc, Deferred, Component, Config and #[prop(\"name\"] i64/f64/String/bool can be injected"
-            ).to_compile_error()
         }
-        _ => Error::new(
-            typ.span(),
-            "Only &, Rc, Component and #[prop(\"name\"] number/string can be injected"
-        ).to_compile_error()
+        _ => {}
     }
+
+    Error::new(
+        type_.span(),
+        "Only &, Rc, Deferred, Component, Config and #[prop(\"name\"] number/String/bool can be injected"
+    ).to_compile_error()
 }
 
 fn generate_deferred_dependencies_code(fields: Vec<&Field>) -> TokenStream2 {
@@ -217,10 +247,20 @@ fn generate_deferred_dependencies_code(fields: Vec<&Field>) -> TokenStream2 {
         })
         .filter(|(_, opt_arg)| opt_arg.is_some())
         .map(|(i, opt_arg)| (i, opt_arg.unwrap()))
-        .map(|(i, t)| generate_dependency_create_code(&t, i))
+        .map(|(i, t)| generate_dependency_create_code(None, &t, i))
         .collect();
 
     return quote::quote! {
         #(#dep_code_list)*
     }
+}
+
+fn get_prop_name(field: &Field) -> Option<String> {
+    let prop_name = field.attrs.iter()
+        .find(|attr| attr.path.to_token_stream().to_string().eq(&"prop".to_string()))
+        .map(|attr| attr.parse_args::<LitStr>().expect("Only string literals supported for #[prop(\"name\"]"))
+        .map(|lit_str| lit_str.value())
+        .or(field.clone().ident.map(|ident| ident.to_string()));
+
+    return prop_name;
 }

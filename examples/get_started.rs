@@ -1,10 +1,12 @@
 extern crate waiter;
 extern crate waiter_core;
+extern crate config;
 
 use waiter::*;
 use waiter::Provider;
 use waiter_core::deferred::Deferred;
 use std::rc::Rc;
+use config::Config;
 
 trait Interface {
     fn int(&self);
@@ -19,7 +21,7 @@ struct Dependency;
 
 impl Dependency {
     fn dep(&self) {
-        println!("dep");
+        println!("Dep");
     }
 }
 
@@ -30,34 +32,36 @@ struct Comp<'a> {
     dependency_box: Box<Dependency>,
     dependency_def_rc: Deferred<Rc<Dependency>>,
     dependency_def_box: Deferred<Box<Dependency>>,
-    int_prop: i64,
-    float_prop: f64,
+    config: Config,
+    #[prop("int")] int_prop: usize,
+    #[prop("float")] float_prop: f32,
     str_prop: String,
     bool_prop: bool
 }
 
 impl<'a>  Comp<'a>  {
-    fn int0(&self) {
+    fn comp(&self) {
         self.dependency_rc.dep();
         self.dependency_ref.dep();
         self.dependency_box.dep();
         self.dependency_def_rc.dep();
         self.dependency_def_box.dep();
-        println!("comp int0, {}, {}, {}, {}", self.int_prop, self.float_prop, self.str_prop, self.bool_prop);
+        self.config.get_str("prop").unwrap();
+        println!("Comp, {}, {}, {}, {}", self.int_prop, self.float_prop, self.str_prop, self.bool_prop);
     }
 }
 
 #[provides]
 impl<'a>  Interface for Comp<'a>  {
     fn int(&self) {
-        println!("interface int");
+        println!("Interface");
     }
 }
 
 #[provides(profiles::Dev)]
 impl<'a>  Interface2 for Comp<'a>  {
     fn int2(&self) {
-        println!("interface int2");
+        println!("Interface 2");
     }
 }
 
@@ -66,7 +70,7 @@ fn main() {
     let mut container = Container::<profiles::Default>::new();
 
     let comp = Provider::<Comp>::get_ref(&mut container);
-    comp.int0();
+    comp.comp();
     comp.int();
     comp.int2();
 

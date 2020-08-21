@@ -1,1 +1,5 @@
-lol = 3
+int = 3
+float = 3.14
+str_prop = "str"
+bool_prop = true
+prop = "prop"
