@@ -22,7 +22,8 @@ impl Dependency {
 }
 
 #[provides]
-fn create_dependency<P>(_container: &mut Container<P>) -> Dependency {
+fn create_dependency(bool_prop: bool) -> Dependency {
+    println!("dep factory {}", bool_prop);
     Dependency
 }
 

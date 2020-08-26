@@ -1,13 +1,52 @@
 use proc_macro::{TokenStream};
-use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, LitStr};
+use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, LitStr,
+          FnArg, Attribute, Pat};
 use syn::export::{TokenStream2, Span, ToTokens};
 use syn::spanned::Spanned;
+
+pub struct Argument {
+    attrs: Vec<Attribute>,
+    name: Option<String>,
+    type_: Type
+}
+
+impl Argument {
+    fn from_type(type_: &Type) -> Self {
+        Self { attrs: vec!(), name: None, type_: type_.clone() }
+    }
+    fn from_field(field: Field) -> Self {
+        Self { attrs: field.attrs, name: field.ident.map(|ident| ident.to_string()), type_: field.ty}
+    }
+    pub fn from_fn_arg(arg: FnArg) -> Self {
+        if let FnArg::Typed(typed) = arg {
+            let name = if let Pat::Ident(pat_ident) = *typed.pat {
+                pat_ident.ident.to_string()
+            } else {
+                panic!("Unsupported argument name")
+            };
+            Self { attrs: typed.attrs, name: Some(name), type_: *typed.ty}
+        } else {
+            panic!("Unsupported argument type")
+        }
+    }
+    fn prop_name(&self) -> Option<String> {
+        self.attrs.iter()
+            .find(|attr| attr.path.to_token_stream().to_string().eq(&"prop".to_string()))
+            .map(|attr| attr.parse_args::<LitStr>().expect("Only string literals supported for #[prop(\"name\"]"))
+            .map(|lit_str| lit_str.value())
+            .or(self.name.clone())
+    }
+}
 
 pub fn generate_component_impl(component: ItemStruct) -> TokenStream {
     let comp_name = &component.ident;
     let comp_generics = &component.generics;
 
-    let dependencies_code = generate_dependencies_create_code(component.fields.iter().collect());
+    let dependencies_code = generate_dependencies_create_code(
+        component.fields.iter()
+            .map(|f| Argument::from_field(f.clone()))
+            .collect()
+    );
     let deferred_dependencies_code = generate_deferred_dependencies_code(component.fields.iter().collect());
 
     let (factory_code, deferred_inject_code) = match component.fields {
@@ -42,13 +81,13 @@ pub fn generate_component_impl(component: ItemStruct) -> TokenStream {
     return TokenStream::from(result);
 }
 
-fn generate_inject_dependencies_tuple(dep_number: usize) -> TokenStream2 {
+pub fn generate_inject_dependencies_tuple(dep_number: usize) -> TokenStream2 {
     let dependencies: Vec<Ident> = (0..dep_number)
         .map(|i| Ident::new(format!("dep_{}", i).as_str(), Span::call_site()))
         .collect();
 
     return quote::quote! {
-        #(#dependencies),*
+        (#(#dependencies),*)
     };
 }
 
@@ -93,21 +132,20 @@ fn generate_inject_deferred(fields: Vec<&Field>, is_tuple: bool) -> TokenStream2
     };
 }
 
-fn generate_dependencies_create_code(fields: Vec<&Field>) -> TokenStream2 {
-    let dep_code_list: Vec<TokenStream2> = fields.iter()
+pub fn generate_dependencies_create_code(args: Vec<Argument>) -> TokenStream2 {
+    let dep_code_list: Vec<TokenStream2> = args.iter()
         .enumerate()
-        .map(|(i, f)| generate_dependency_create_code(Some(f), &f.ty, i))
-        .collect();
+        .map(|(i, arg)| generate_dependency_create_code(arg.clone(), i)).collect();
 
     return quote::quote! {
         #(#dep_code_list)*
     }
 }
 
-fn generate_dependency_create_code(field: Option<&Field>, type_: &Type, pos: usize) -> TokenStream2 {
+fn generate_dependency_create_code(arg: &Argument, pos: usize) -> TokenStream2 {
     let dep_var_name = quote::format_ident!("dep_{}", pos);
 
-    match type_ {
+    match &arg.type_ {
         Type::Reference(type_ref) => {
             let referenced_type = &type_ref.elem;
             return quote::quote! {
@@ -161,9 +199,9 @@ fn generate_dependency_create_code(field: Option<&Field>, type_: &Type, pos: usi
                 }
             }
 
-            let prop_name = field.and_then(|f| get_prop_name(f));
-            if prop_name.is_some() {
-                let prop_name = prop_name.unwrap();
+
+            if arg.prop_name().is_some() {
+                let prop_name = arg.prop_name().unwrap();
 
                 let config_safe_number_cast_method = match type_name.as_str() {
                     "i128" | "u128" => Some(Ident::new("get_int", Span::call_site())),
@@ -212,7 +250,7 @@ fn generate_dependency_create_code(field: Option<&Field>, type_: &Type, pos: usi
     }
 
     Error::new(
-        type_.span(),
+        arg.type_.span(),
         "Only &, Rc, Deferred, Component, Config and #[prop(\"name\"] number/String/bool can be injected"
     ).to_compile_error()
 }
@@ -247,20 +285,10 @@ fn generate_deferred_dependencies_code(fields: Vec<&Field>) -> TokenStream2 {
         })
         .filter(|(_, opt_arg)| opt_arg.is_some())
         .map(|(i, opt_arg)| (i, opt_arg.unwrap()))
-        .map(|(i, t)| generate_dependency_create_code(None, &t, i))
+        .map(|(i, t)| generate_dependency_create_code(&Argument::from_type(t), i))
         .collect();
 
     return quote::quote! {
         #(#dep_code_list)*
     }
-}
-
-fn get_prop_name(field: &Field) -> Option<String> {
-    let prop_name = field.attrs.iter()
-        .find(|attr| attr.path.to_token_stream().to_string().eq(&"prop".to_string()))
-        .map(|attr| attr.parse_args::<LitStr>().expect("Only string literals supported for #[prop(\"name\"]"))
-        .map(|lit_str| lit_str.value())
-        .or(field.clone().ident.map(|ident| ident.to_string()));
-
-    return prop_name;
 }

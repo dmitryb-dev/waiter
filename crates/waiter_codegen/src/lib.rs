@@ -20,7 +20,7 @@ pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let comp = syn::parse::<ItemStruct>(item.clone()).unwrap();
 
     let mut res: TokenStream = TokenStream::from_str(
-        Regex::new(r"#\[prop\(.+\)]").unwrap()
+        Regex::new(r"#\[prop\(.+?\)]").unwrap()
             .replace_all(&item.to_string(), "")
             .as_ref()
     ).unwrap_or_default();

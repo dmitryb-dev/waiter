@@ -3,6 +3,7 @@ use proc_macro::TokenStream;
 use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType};
 use syn::export::{TokenStream2, ToTokens};
 use std::ops::Deref;
+use component::{generate_dependencies_create_code, generate_inject_dependencies_tuple, Argument};
 
 pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
     let comp_name = component.ident;
@@ -36,8 +37,19 @@ pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn
 
     let fn_name = factory.sig.ident;
 
+    let dependencies_code = generate_dependencies_create_code(
+        factory.sig.inputs.iter()
+            .map(|arg| Argument::from_fn_arg(arg.clone()))
+            .collect()
+    );
+    let factory_code = generate_inject_dependencies_tuple(factory.sig.inputs.len());
+
     let create_component_code = quote::quote! {
-        #fn_name(self)
+        {
+            let container = &self;
+            #dependencies_code
+            #fn_name #factory_code
+        }
     };
     let inject_deferred_code = quote::quote! {};
 
