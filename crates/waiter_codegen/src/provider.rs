@@ -7,6 +7,7 @@ use component::{generate_dependencies_create_code, generate_inject_dependencies_
 
 pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
     let comp_name = component.ident;
+    let comp_generics = component.generics.clone();
 
     let create_component_code = quote::quote! {
         #comp_name::__waiter_create(self)
@@ -16,7 +17,7 @@ pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenSt
     };
 
     generate_component_provider_impl(
-        comp_name.to_token_stream(),
+        quote::quote! { #comp_name #comp_generics },
         component.generics.params.iter().collect(),
         vec!(),
         create_component_code,
@@ -27,7 +28,7 @@ pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenSt
 pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn) -> TokenStream {
     let comp_name = if let ReturnType::Type(_, type_) = &factory.sig.output {
         if let Type::Path(type_path) = type_.deref() {
-            type_path.path.segments.first().unwrap().ident.to_token_stream()
+            type_path.path.segments.to_token_stream()
         } else {
             panic!("Unsupported return type for factory function {}", factory.sig.to_token_stream().to_string())
         }
@@ -88,11 +89,9 @@ pub fn generate_component_provider_impl(
         (profiles, quote::quote! { <#(#comp_generics),*> })
     };
 
-    let comp_generics = quote::quote! { <#(#comp_generics),*> };
-
     let result = quote::quote! {#(
-        impl #provider_generics waiter_di::Provider<#comp_name #comp_generics> for Container<#profiles> {
-            fn get(&mut self) -> std::rc::Rc<#comp_name #comp_generics> {
+        impl #provider_generics waiter_di::Provider<#comp_name> for Container<#profiles> {
+            fn get(&mut self) -> std::rc::Rc<#comp_name> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
                     let component = std::rc::Rc::new(#create_component_code);
@@ -106,7 +105,7 @@ pub fn generate_component_provider_impl(
                     .downcast::<#comp_name>()
                     .unwrap();
             }
-            fn get_ref(&mut self) -> &#comp_name #comp_generics {
+            fn get_ref(&mut self) -> &#comp_name {
                 // Value under RC is still stored in container, so it can be safely return as reference
                 // that has the same life as container reference
                 unsafe {
@@ -116,7 +115,7 @@ pub fn generate_component_provider_impl(
                 }
             }
 
-            fn create(&mut self) -> Box<#comp_name #comp_generics> {
+            fn create(&mut self) -> Box<#comp_name> {
                 Box::new(#create_component_code)
             }
         }
