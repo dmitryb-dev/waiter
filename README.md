@@ -67,7 +67,7 @@ fn main() {
 }
 ```
 
-For create new struct instead of reference:
+To create new struct instead of getting reference:
 
 ```rust
 #[component]
@@ -144,3 +144,6 @@ fn create_dependency(bool_prop: bool) -> Dependency {
     Dependency { prop: bool_prop }
 }
 ```
+
+Deferred args in factory functions is unsupported. In the rest it can accept 
+the same arg types as `#[component]`.
