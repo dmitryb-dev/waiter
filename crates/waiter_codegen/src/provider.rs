@@ -13,7 +13,7 @@ pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenSt
         #comp_name::__waiter_create(self)
     };
     let inject_deferred_code = quote::quote! {
-        #comp_name::__waiter_inject_deferred(self, component);
+        #comp_name::__waiter_inject_deferred(self, &*component);
     };
 
     generate_component_provider_impl(
@@ -116,7 +116,9 @@ pub fn generate_component_provider_impl(
             }
 
             fn create(&mut self) -> Box<#comp_name> {
-                Box::new(#create_component_code)
+                let component = Box::new(#create_component_code);
+                #inject_deferred_code
+                return component;
             }
         }
     )*};
