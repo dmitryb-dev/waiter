@@ -8,15 +8,18 @@ pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenSt
     let comp_name = component.ident;
 
     let create_component_code = quote::quote! {
-        Box::new(#comp_name::__waiter_create(self));
-        #comp_name::__waiter_inject_deferred(self, &component)
+        #comp_name::__waiter_create(self)
+    };
+    let inject_deferred_code = quote::quote! {
+        #comp_name::__waiter_inject_deferred(self, component);
     };
 
     generate_component_provider_impl(
         comp_name.to_token_stream(),
         component.generics.params.iter().collect(),
         vec!(),
-        create_component_code
+        create_component_code,
+        inject_deferred_code
     )
 }
 
@@ -34,8 +37,9 @@ pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn
     let fn_name = factory.sig.ident;
 
     let create_component_code = quote::quote! {
-        Box::new(#fn_name(self))
+        #fn_name(self)
     };
+    let inject_deferred_code = quote::quote! {};
 
     generate_component_provider_impl(
         comp_name,
@@ -43,7 +47,8 @@ pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn
             .filter(|p| if let GenericParam::Lifetime(_) = p { true } else { false })
             .collect(),
         profiles,
-        create_component_code
+        create_component_code,
+        inject_deferred_code
     )
 }
 
@@ -51,7 +56,8 @@ pub fn generate_component_provider_impl(
     comp_name: TokenStream2,
     comp_generics: Vec<&GenericParam>,
     profiles: Vec<&Path>,
-    create_component_code: TokenStream2
+    create_component_code: TokenStream2,
+    inject_deferred_code: TokenStream2
 ) -> TokenStream {
     let (profiles, provider_generics) = if profiles.is_empty() {
         let generic_profile = quote::quote! { PROFILE };
@@ -77,8 +83,9 @@ pub fn generate_component_provider_impl(
             fn get(&mut self) -> std::rc::Rc<#comp_name #comp_generics> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
-                    let component = std::rc::Rc::<#comp_name>::from(Provider::<#comp_name>::create(self));
-                    self.components.insert(type_id, component);
+                    let component = std::rc::Rc::new(#create_component_code);
+                    self.components.insert(type_id, component.clone());
+                    #inject_deferred_code
                 }
                 let any = self.components.get(&type_id)
                     .unwrap();
@@ -96,8 +103,7 @@ pub fn generate_component_provider_impl(
             }
 
             fn create(&mut self) -> Box<#comp_name #comp_generics> {
-                let mut component = #create_component_code;
-                return component;
+                return Box::new(#create_component_code);
             }
         }
     )*};

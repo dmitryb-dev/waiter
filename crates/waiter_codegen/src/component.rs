@@ -32,7 +32,7 @@ pub fn generate_component_impl(component: ItemStruct) -> TokenStream {
                 #dependencies_code
                 return #comp_name #factory_code;
             }
-            fn __waiter_inject_deferred<P>(container: &mut Container<P>, component: &Box<Self>) {
+            fn __waiter_inject_deferred<P>(container: &mut Container<P>, component: Rc<Self>) {
                 #deferred_dependencies_code
                 #deferred_inject_code
             }
