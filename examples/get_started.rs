@@ -13,27 +13,30 @@ trait Interface2 {
     fn int2(&self);
 }
 
-struct Dependency;
+struct Dependency {
+    value: i32
+}
 
 impl Dependency {
     fn dep(&self) {
-        println!("Dep");
+        println!("Dep {}", self.value);
     }
 }
 
 #[provides]
 fn create_dependency(bool_prop: bool) -> Dependency {
     println!("dep factory {}", bool_prop);
-    Dependency
+    Dependency { value: if bool_prop { 3 } else { 5 } }
 }
 
 #[component]
-struct Comp<'a> {
+struct Comp {
+    dependency: Dependency,
     dependency_rc: Rc<Dependency>,
-    dependency_ref: &'a Dependency,
     dependency_box: Box<Dependency>,
     dependency_def_rc: Deferred<Rc<Dependency>>,
     dependency_def_box: Deferred<Box<Dependency>>,
+    cyclic: Deferred<Rc<dyn Interface>>,
     config: Config,
     #[prop("int")] int_prop: usize,
     #[prop("float")] float_prop: f32,
@@ -41,10 +44,10 @@ struct Comp<'a> {
     bool_prop: bool
 }
 
-impl<'a>  Comp<'a>  {
+impl  Comp  {
     fn comp(&self) {
+        self.dependency.dep();
         self.dependency_rc.dep();
-        self.dependency_ref.dep();
         self.dependency_box.dep();
         self.dependency_def_rc.dep();
         self.dependency_def_box.dep();
@@ -54,14 +57,14 @@ impl<'a>  Comp<'a>  {
 }
 
 #[provides]
-impl<'a>  Interface for Comp<'a>  {
+impl  Interface for Comp  {
     fn int(&self) {
         println!("Interface");
     }
 }
 
 #[provides(profiles::Dev)]
-impl<'a>  Interface2 for Comp<'a>  {
+impl  Interface2 for Comp  {
     fn int2(&self) {
         println!("Interface 2");
     }
@@ -78,7 +81,6 @@ fn main() {
 
     let comp = Provider::<dyn Interface>::get_ref(&mut container);
     comp.int();
-
 
 
     let mut container = Container::<profiles::Dev>::new();

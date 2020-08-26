@@ -146,17 +146,6 @@ fn generate_dependency_create_code(arg: &Argument, pos: usize) -> TokenStream2 {
     let dep_var_name = quote::format_ident!("dep_{}", pos);
 
     match &arg.type_ {
-        Type::Reference(type_ref) => {
-            let referenced_type = &type_ref.elem;
-            return quote::quote! {
-                let #dep_var_name = unsafe {
-                    (waiter_di::Provider::<#referenced_type>::get_ref(container) as *const #referenced_type)
-                        .as_ref()
-                        .unwrap()
-                };
-            };
-        }
-
         Type::Path(path_type) => {
             let type_name = path_type.path.to_token_stream().to_string();
 
@@ -245,13 +234,17 @@ fn generate_dependency_create_code(arg: &Argument, pos: usize) -> TokenStream2 {
                     }
                 }
             }
+
+            return quote::quote! {
+                let #dep_var_name = *waiter_di::Provider::<#path_type>::create(container);
+            }
         }
         _ => {}
     }
 
     Error::new(
         arg.type_.span(),
-        "Only &, Rc, Deferred, Component, Config and #[prop(\"name\"] number/String/bool can be injected"
+        "Only Rc, Box, Deferred, Component, Config and #[prop(\"name\"] number/String/bool can be injected"
     ).to_compile_error()
 }
 

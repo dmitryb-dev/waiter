@@ -107,7 +107,9 @@ pub fn generate_component_provider_impl(
                     .unwrap();
             }
             fn get_ref(&mut self) -> &#comp_name #comp_generics {
-                  unsafe {
+                // Value under RC is still stored in container, so it can be safely return as reference
+                // that has the same life as container reference
+                unsafe {
                     std::rc::Rc::as_ptr(&Provider::<#comp_name>::get(self))
                         .as_ref()
                         .unwrap()
@@ -115,7 +117,7 @@ pub fn generate_component_provider_impl(
             }
 
             fn create(&mut self) -> Box<#comp_name #comp_generics> {
-                return Box::new(#create_component_code);
+                Box::new(#create_component_code)
             }
         }
     )*};

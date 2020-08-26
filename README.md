@@ -53,25 +53,12 @@ fn main() {
 }
 ```
 
-For &ref
-
-```rust
-#[component]
-struct Comp<'a> {
-    dependency_ref: &'a Dependency
-}
-
-fn main() {
-    let mut container = Container::<profiles::Default>::new();
-    Provider::<Comp>::get_ref(&mut container);
-}
-```
-
 To create new struct instead of getting reference:
 
 ```rust
 #[component]
 struct Comp {
+    dependency: Dependency,
     dependency_box: Box<Dependency>
 }
 
@@ -101,7 +88,7 @@ Use Deferred type:
 
 ```rust
 #[component]
-struct Comp<'a> {
+struct Comp {
     dependency_def_rc: Deferred<Rc<Dependency>>,
     dependency_def_box: Deferred<Box<Dependency>>
 }
