@@ -11,6 +11,7 @@ use syn::token::Comma;
 use syn::parse::Parser;
 use std::str::FromStr;
 use regex::Regex;
+use syn::spanned::Spanned;
 
 mod component;
 mod provider;
@@ -52,4 +53,39 @@ pub fn provides(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     return res;
+}
+
+#[proc_macro_attribute]
+pub fn wrapper(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let wrapper = parse_macro_input!(item as ItemStruct);
+
+    let type_to_wrap = if let Fields::Unnamed(fields) = &wrapper.fields {
+        let field = fields.unnamed.first();
+        if field.is_none() {
+            return TokenStream::from(
+                Error::new(wrapper.span(), "Struct annotated #[wrapper] must have exactly one field")
+                    .to_compile_error()
+            );
+        }
+
+        field.unwrap().ty.clone()
+    } else {
+        return TokenStream::from(
+            Error::new(wrapper.span(), "Only tuple like struct supported for #[wrapper]")
+                .to_compile_error()
+        );
+    };
+
+    let wrapper_name = &wrapper.ident;
+
+    return TokenStream::from(quote::quote! {
+        #wrapper
+        impl Deref for #wrapper_name {
+            type Target = #type_to_wrap;
+
+            fn deref(&self) -> &Self::Target {
+                return &self.0;
+            }
+        }
+    });
 }

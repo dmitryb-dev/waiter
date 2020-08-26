@@ -4,6 +4,7 @@ extern crate config;
 use waiter_di::*;
 use config::Config;
 use std::rc::Rc;
+use std::ops::Deref;
 
 trait Interface {
     fn int(&self);
@@ -14,19 +15,28 @@ trait Interface2 {
 }
 
 struct Dependency {
-    value: i32
+    map: HashMap
 }
 
 impl Dependency {
     fn dep(&self) {
-        println!("Dep {}", self.value);
+        println!("Dep {:?}", self.map);
     }
 }
 
 #[provides]
-fn create_dependency(bool_prop: bool) -> Dependency {
-    println!("dep factory {}", bool_prop);
-    Dependency { value: if bool_prop { 3 } else { 5 } }
+fn create_dependency(map: HashMap) -> Dependency {
+    println!("dep factory");
+    Dependency { map }
+}
+
+#[wrapper]
+#[derive(Debug)]
+struct HashMap(std::collections::HashMap<i32, i32>);
+
+#[provides]
+fn create_external_type_dependency() -> HashMap {
+    HashMap(std::collections::HashMap::<i32, i32>::new())
 }
 
 #[component]
@@ -44,7 +54,7 @@ struct Comp {
     bool_prop: bool
 }
 
-impl  Comp  {
+impl Comp {
     fn comp(&self) {
         self.dependency.dep();
         self.dependency_rc.dep();
@@ -57,14 +67,14 @@ impl  Comp  {
 }
 
 #[provides]
-impl  Interface for Comp  {
+impl Interface for Comp {
     fn int(&self) {
         println!("Interface");
     }
 }
 
 #[provides(profiles::Dev)]
-impl  Interface2 for Comp  {
+impl Interface2 for Comp {
     fn int2(&self) {
         println!("Interface 2");
     }

@@ -47,7 +47,7 @@ pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn
 
     let create_component_code = quote::quote! {
         {
-            let container = &self;
+            let container = &mut *self;
             #dependencies_code
             #fn_name #factory_code
         }

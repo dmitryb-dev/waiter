@@ -134,3 +134,35 @@ fn create_dependency(bool_prop: bool) -> Dependency {
 
 Deferred args in factory functions is unsupported. In the rest it can accept 
 the same arg types as `#[component]`.
+
+External types isn't supported for factory functions:
+
+```rust
+#[provides] // won't compile
+fn create_external_type_dependency() -> HashMap<i32, i32> {
+    HashMap::new()
+}
+```
+
+So you need to create crate-local wrapper:
+
+```rust
+struct Wrapper(HashMap<i32, i32>);
+
+#[provides]
+fn create_external_type_dependency() -> Wrapper {
+    Wrapper(HashMap::new())
+}
+```
+
+For convenience you can use `#[wrapper]` attribute to implement Deref automatically:
+
+```rust
+#[wrapper]
+struct HashMap(std::collections::HashMap<i32, i32>);
+
+#[provides]
+fn create_external_type_dependency() -> HashMap {
+    return HashMap(std::collections::HashMap::<i32, i32>::new());
+}
+```
