@@ -140,7 +140,7 @@ If you can't use `#[component]` annotation, use factory function instead:
 
 ```rust
 #[provides]
-fn create_dependency<P>(_container: &mut Container<P>) -> Dependency {
-    Dependency
+fn create_dependency(bool_prop: bool) -> Dependency {
+    Dependency { prop: bool_prop }
 }
 ```
