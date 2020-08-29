@@ -67,11 +67,11 @@ pub fn generate_component_impl(component: ItemStruct) -> TokenStream {
 
     let result = quote::quote! {
         impl #comp_generics waiter_di::Component for #comp_name #comp_generics {
-            fn __waiter_create<P>(container: &mut Container<P>) -> Self {
+            fn __waiter_create<P>(container: &mut waiter_di::Container<P>) -> Self {
                 #dependencies_code
                 return #comp_name #factory_code;
             }
-            fn __waiter_inject_deferred<P>(container: &mut Container<P>, component: &Self) {
+            fn __waiter_inject_deferred<P>(container: &mut waiter_di::Container<P>, component: &Self) {
                 #deferred_dependencies_code
                 #deferred_inject_code
             }

@@ -90,7 +90,7 @@ pub fn generate_component_provider_impl(
     };
 
     let result = quote::quote! {#(
-        impl #provider_generics waiter_di::Provider<#comp_name> for Container<#profiles> {
+        impl #provider_generics waiter_di::Provider<#comp_name> for waiter_di::Container<#profiles> {
             fn get(&mut self) -> std::rc::Rc<#comp_name> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
@@ -109,7 +109,7 @@ pub fn generate_component_provider_impl(
                 // Value under RC is still stored in container, so it can be safely return as reference
                 // that has the same life as container reference
                 unsafe {
-                    std::rc::Rc::as_ptr(&Provider::<#comp_name>::get(self))
+                    std::rc::Rc::as_ptr(&waiter_di::Provider::<#comp_name>::get(self))
                         .as_ref()
                         .unwrap()
                 }
@@ -150,11 +150,11 @@ pub fn generate_interface_provider_impl(profiles: Vec<&Path>, impl_block: ItemIm
 
     let result = if profiles.is_empty() {
         quote::quote! {
-            impl<P> waiter_di::Provider<dyn #interface> for Container<P> #provider_body
+            impl<P> waiter_di::Provider<dyn #interface> for waiter_di::Container<P> #provider_body
         }
     } else {
         quote::quote! {
-            #(impl waiter_di::Provider<dyn #interface> for Container<#profiles> #provider_body)*
+            #(impl waiter_di::Provider<dyn #interface> for waiter_di::Container<#profiles> #provider_body)*
         }
     };
 
