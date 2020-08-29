@@ -2,7 +2,8 @@ extern crate proc_macro;
 extern crate config;
 extern crate regex;
 extern crate waiter_codegen;
-
+#[macro_use]
+extern crate lazy_static;
 
 pub mod container;
 pub mod deferred;

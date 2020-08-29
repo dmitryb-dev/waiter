@@ -2,10 +2,8 @@
 macro_rules! inject {
     ($comp:path: $($profile:path),*) => {
         {
-            let parsed_profile = waiter_di::parse_profile();
-            println!("Using profile: {}", parsed_profile);
             $(
-                if profile_name::<$profile>().eq(&parsed_profile) {
+                if profile_name::<$profile>().eq(&waiter_di::APP_PROFILE.as_str()) {
                     waiter_di::Provider::<$comp>::create(&mut waiter_di::Container::<$profile>::new())
                 } else
             )*

@@ -52,15 +52,24 @@ impl<P> Container<P> {
     }
 }
 
-pub fn parse_profile() -> String {
+
+lazy_static! {
+    pub static ref APP_PROFILE: String = parse_profile();
+}
+
+fn parse_profile() -> String {
     let mut config = Config::new();
 
     config.merge(File::with_name("config/default").required(false))
         .expect("Failed to read default config file");
 
-    return env::var("PROFILE")
+    let parsed_profile = env::var("PROFILE")
         .or(config.get_str("profile"))
-        .unwrap_or("default".to_string())
+        .unwrap_or("default".to_string());
+
+    log::info!("Using profile: {}", parsed_profile);
+
+    parsed_profile
 }
 
 pub fn profile_name<T>() -> String {

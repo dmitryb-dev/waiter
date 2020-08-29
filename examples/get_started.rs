@@ -101,6 +101,7 @@ fn main() {
     comp.int2();
 
 
+    println!("Using profile: {}", APP_PROFILE.as_str());
     let comp = inject!(Comp: profiles::Default, profiles::Dev);
     comp.comp();
 }
