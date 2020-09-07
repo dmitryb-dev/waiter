@@ -1,6 +1,6 @@
 # Dependency injection for Rust
 
-See examples/get_started.rs for list of available injection options
+See `examples/get_started.rs` for list of available injection options
 
 ## How to use
 
@@ -74,11 +74,17 @@ It uses `config` crate under the hood, for example it tries to find `float_prop`
 in environment, after that tries `config/default.toml`, after that `config/{profile}.toml`
 
 ```rust
+#[derive(Debug, Deserialize)]
+struct ConfigObject {
+    i32_prop: i32
+}
+
 #[component]
 struct Comp {
     config: Config,
     #[prop("int")] int_prop: usize,
-    float_prop: f32
+    float_prop: f32,
+    #[prop] config_object: ConfigObject
 }
 ```
 

@@ -1,10 +1,12 @@
 extern crate waiter_di;
 extern crate config;
+extern crate serde;
 
 use waiter_di::*;
 use config::Config;
 use std::rc::Rc;
 use std::ops::Deref;
+use serde::Deserialize;
 
 trait Interface {
     fn int(&self);
@@ -39,6 +41,11 @@ fn create_external_type_dependency() -> HashMap {
     HashMap(std::collections::HashMap::<i32, i32>::new())
 }
 
+#[derive(Debug, Deserialize)]
+struct ConfigObject {
+    i32_prop: i32
+}
+
 #[component]
 struct Comp {
     dependency: Dependency,
@@ -51,7 +58,8 @@ struct Comp {
     #[prop("int")] int_prop: usize,
     #[prop("float")] float_prop: f32,
     str_prop: String,
-    bool_prop: bool
+    bool_prop: bool,
+    #[prop] config_object: ConfigObject
 }
 
 impl Comp {

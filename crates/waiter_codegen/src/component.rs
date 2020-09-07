@@ -10,6 +10,11 @@ pub struct Argument {
     type_: Type
 }
 
+pub struct PropertyAttr {
+    is_annotated: bool,
+    name: Option<String>
+}
+
 impl Argument {
     fn from_type(type_: &Type) -> Self {
         Self { attrs: vec!(), name: None, type_: type_.clone() }
@@ -29,12 +34,24 @@ impl Argument {
             panic!("Unsupported argument type")
         }
     }
-    fn prop_name(&self) -> Option<String> {
-        self.attrs.iter()
-            .find(|attr| attr.path.to_token_stream().to_string().eq(&"prop".to_string()))
-            .map(|attr| attr.parse_args::<LitStr>().expect("Only string literals supported for #[prop(\"name\"]"))
-            .map(|lit_str| lit_str.value())
-            .or(self.name.clone())
+    fn prop_attr(&self) -> Option<PropertyAttr> {
+        let prop_attr = self.attrs.iter()
+            .find(|attr| attr.path.to_token_stream().to_string().eq(&"prop".to_string()));
+
+        if prop_attr.is_some() {
+            if prop_attr.unwrap().tokens.is_empty() {
+                Some(PropertyAttr { name: None, is_annotated: true })
+            } else {
+                let name = prop_attr.unwrap()
+                    .parse_args::<LitStr>().expect("Only string literals supported for #[prop(\"name\"]")
+                    .value();
+
+                Some(PropertyAttr { name: Some(name), is_annotated: true })
+            }
+        } else {
+            self.name.clone()
+                .map(|name| PropertyAttr { name: Some(name), is_annotated: false })
+        }
     }
 }
 
@@ -189,8 +206,17 @@ fn generate_dependency_create_code(arg: &Argument, pos: usize) -> TokenStream2 {
             }
 
 
-            if arg.prop_name().is_some() {
-                let prop_name = arg.prop_name().unwrap();
+            if arg.prop_attr().is_some() {
+                let prop_attr = arg.prop_attr().unwrap();
+
+                if prop_attr.name.is_none() {
+                    return quote::quote! {
+                        let #dep_var_name = container.config.clone().try_into::<#path_type>()
+                            .expect(format!("Can't parse config as {}", #type_name).as_str());
+                    };
+                }
+
+                let prop_name = prop_attr.name.unwrap();
 
                 let config_safe_number_cast_method = match type_name.as_str() {
                     "i128" | "u128" => Some(Ident::new("get_int", Span::call_site())),
@@ -232,6 +258,10 @@ fn generate_dependency_create_code(arg: &Argument, pos: usize) -> TokenStream2 {
                             .expect(format!("Property {} not found", #prop_name).as_str())
                             as #path_type;
                     }
+                }
+
+                if prop_attr.is_annotated {
+                    panic!("Unsupported property type");
                 }
             }
 

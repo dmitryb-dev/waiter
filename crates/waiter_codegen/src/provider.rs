@@ -1,9 +1,10 @@
 use proc_macro::TokenStream;
 
-use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType};
+use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType, Error};
 use syn::export::{TokenStream2, ToTokens};
 use std::ops::Deref;
 use component::{generate_dependencies_create_code, generate_inject_dependencies_tuple, Argument};
+use syn::spanned::Spanned;
 
 pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
     let comp_name = component.ident;
@@ -127,13 +128,18 @@ pub fn generate_component_provider_impl(
 }
 
 pub fn generate_interface_provider_impl(profiles: Vec<&Path>, impl_block: ItemImpl) -> TokenStream {
-    let (_, interface, _) = impl_block.trait_
-        .expect("#[provides] can be used only on impl blocks for traits");
+    let interface = match impl_block.trait_ {
+        Some((_, interface, _)) => interface,
+        None => return TokenStream::from(Error::new(
+            impl_block.span(),
+            "#[provides] can be used only on impl blocks for traits"
+        ).to_compile_error())
+    };
 
     let comp_name = if let Type::Path(comp_path) = *impl_block.self_ty {
         comp_path.path.segments.first().unwrap().ident.clone()
     } else {
-        panic!("Failed to create provider")
+        return TokenStream::from(Error::new(impl_block.self_ty.span(), "Failed to create provider").to_compile_error())
     };
 
     let provider_body = quote::quote! {{
