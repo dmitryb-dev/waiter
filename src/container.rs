@@ -5,6 +5,7 @@ use std::env;
 use std::marker::PhantomData;
 use config::{Config, Environment, File};
 use regex::Regex;
+use std::env::args;
 
 pub mod profiles {
     pub struct Default;
@@ -44,6 +45,9 @@ impl<P> Container<P> {
         config.merge(Environment::new())
             .expect("Failed to load environment");
 
+        config.merge(parse_args())
+            .expect("Failed to parse args");
+
         Container {
             config,
             profile: PhantomData::<P>,
@@ -63,13 +67,39 @@ fn parse_profile() -> String {
     config.merge(File::with_name("config/default").required(false))
         .expect("Failed to read default config file");
 
-    let parsed_profile = env::var("PROFILE")
-        .or(config.get_str("profile"))
+    let profile_arg = args().position(|arg| arg.as_str() == "--profile")
+        .and_then(|arg_pos| args().nth(arg_pos + 1));
+
+    let parsed_profile = profile_arg
+        .or(env::var("PROFILE").ok())
+        .or(config.get_str("profile").ok())
         .unwrap_or("default".to_string());
 
     log::info!("Using profile: {}", parsed_profile);
 
     parsed_profile
+}
+
+pub fn parse_args() -> Config {
+    let mut config = Config::new();
+
+    let mut args = args();
+    loop {
+        let arg = args.next();
+        if arg.is_some() {
+            let arg = arg.unwrap();
+            if arg.starts_with("--") {
+                let value = args.next();
+                if value.is_some() {
+                    config.set(&arg[2..], value).unwrap();
+                }
+            }
+        } else {
+            break;
+        }
+    }
+
+    config
 }
 
 pub fn profile_name<T>() -> String {

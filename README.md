@@ -71,7 +71,8 @@ fn main() {
 ## Properties
 
 It uses `config` crate under the hood, for example it tries to find `float_prop` 
-in environment, after that tries `config/default.toml`, after that `config/{profile}.toml`
+in args as `--float_prop <value>`, if not found it tries to find it in environment variables, 
+after that tries `config/{profile}.toml`, after that `config/default.toml`
 
 ```rust
 #[derive(Debug, Deserialize)]
@@ -117,9 +118,10 @@ fn main() {
 }
 ```
 
-## Get profile from environment or `config/default.toml`
+## Get profile from args, environment or `config/default.toml`
 
-Just define property named `profile` and use `inject!` macro:
+Just define property named `profile` as `--profile <profile>` arg, `profile` env variable or 
+`profile` property in `config/default.toml` and use `inject!` macro:
 
 ```rust
 fn main() {
