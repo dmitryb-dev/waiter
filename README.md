@@ -1,6 +1,17 @@
 # Dependency injection for Rust
 
-See `examples/get_started.rs` for list of available injection options
+How to use:
+
+`Cargo.toml`:
+```toml
+waiter_di = "1.2.3"
+```
+`lib.rs` and any other file, that uses library:
+```rust
+use waiter_di::*;
+```
+
+See `examples/get_started.rs` for demo of available injection options.
 
 ## How to use
 
