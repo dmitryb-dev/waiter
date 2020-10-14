@@ -11,7 +11,9 @@ waiter_di = "1.2.3"
 use waiter_di::*;
 ```
 
-See `examples/get_started.rs` for demo of available injection options.
+See `examples/get_started.rs` for minimal example of usage.
+
+See `examples/demo.rs` for demo of all available injection options.
 
 ## How to use
 

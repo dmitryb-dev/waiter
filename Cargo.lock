@@ -273,7 +273,7 @@ dependencies = [
 
 [[package]]
 name = "waiter_di"
-version = "1.2.3"
+version = "1.2.4"
 dependencies = [
  "config",
  "lazy_static 1.4.0",
