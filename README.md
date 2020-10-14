@@ -4,16 +4,20 @@ How to use:
 
 `Cargo.toml`:
 ```toml
-waiter_di = "1.2.3"
+waiter_di = "1.2.4"
 ```
 `lib.rs` and any other file, that uses library:
 ```rust
 use waiter_di::*;
 ```
 
-See `examples/get_started.rs` for minimal example of usage.
+See 
+[examples/get_started.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/get_started.rs) 
+for minimal example of usage.
 
-See `examples/demo.rs` for demo of all available injection options.
+See 
+[examples/demo.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/demo.rs) 
+for demo of all available injection options.
 
 ## How to use
 
