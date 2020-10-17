@@ -4,7 +4,7 @@ How to use:
 
 `Cargo.toml`:
 ```toml
-waiter_di = "1.2.4"
+waiter_di = "1.3.0"
 ```
 `lib.rs` and any other file, that uses library:
 ```rust
@@ -101,6 +101,8 @@ struct ConfigObject {
 struct Comp {
     config: Config,
     #[prop("int")] int_prop: usize,
+    #[prop("int")] int_prop_opt: Option<usize>,
+    #[prop("int" = 42)] int_prop_with_default_value: usize,
     float_prop: f32,
     #[prop] config_object: ConfigObject
 }
@@ -180,11 +182,10 @@ fn create_external_type_dependency() -> Wrapper {
 }
 ```
 
-For convenience you can use `#[wrapper]` attribute to implement Deref automatically:
+For convenience you can use `wrap!` macro to implement Deref automatically:
 
 ```rust
-#[wrapper]
-struct HashMap(std::collections::HashMap<i32, i32>);
+wrap!(std::collections::HashMap<i32, i32> as HashMap);
 
 #[provides]
 fn create_external_type_dependency() -> HashMap {

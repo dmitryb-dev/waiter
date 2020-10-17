@@ -3,8 +3,9 @@ use proc_macro::TokenStream;
 use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType, Error};
 use syn::export::{TokenStream2, ToTokens};
 use std::ops::Deref;
-use component::{generate_dependencies_create_code, generate_inject_dependencies_tuple, Argument};
+use component::{generate_dependencies_create_code, generate_inject_dependencies_tuple};
 use syn::spanned::Spanned;
+use component::injector::TypeToInject;
 
 pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
     let comp_name = component.ident;
@@ -26,23 +27,29 @@ pub fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenSt
     )
 }
 
-pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn) -> TokenStream {
+pub fn generate_component_provider_impl_fn(profiles: Vec<Path>, factory: ItemFn) -> Result<TokenStream, Error> {
     let comp_name = if let ReturnType::Type(_, type_) = &factory.sig.output {
         if let Type::Path(type_path) = type_.deref() {
             type_path.path.segments.to_token_stream()
         } else {
-            panic!("Unsupported return type for factory function {}", factory.sig.to_token_stream().to_string())
+            return Err(Error::new(
+                factory.span(),
+                "Unsupported return type for factory function"
+            ))
         }
     } else {
-        panic!("Return type must be specified for factory function {}", factory.sig.to_token_stream().to_string())
+        return Err(Error::new(
+            factory.span(),
+            "Return type must be specified for factory function"
+        ))
     };
 
     let fn_name = factory.sig.ident;
 
     let dependencies_code = generate_dependencies_create_code(
         factory.sig.inputs.iter()
-            .map(|arg| Argument::from_fn_arg(arg.clone()))
-            .collect()
+            .map(|arg| TypeToInject::from_fn_arg(arg.clone()))
+            .collect::<Result<Vec<_>, _>>()?
     );
     let factory_code = generate_inject_dependencies_tuple(factory.sig.inputs.len());
 
@@ -55,7 +62,7 @@ pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn
     };
     let inject_deferred_code = quote::quote! {};
 
-    generate_component_provider_impl(
+    Ok(generate_component_provider_impl(
         comp_name,
         factory.sig.generics.params.iter()
             .filter(|p| if let GenericParam::Lifetime(_) = p { true } else { false })
@@ -63,13 +70,13 @@ pub fn generate_component_provider_impl_fn(profiles: Vec<&Path>, factory: ItemFn
         profiles,
         create_component_code,
         inject_deferred_code
-    )
+    ))
 }
 
 pub fn generate_component_provider_impl(
     comp_name: TokenStream2,
     comp_generics: Vec<&GenericParam>,
-    profiles: Vec<&Path>,
+    profiles: Vec<Path>,
     create_component_code: TokenStream2,
     inject_deferred_code: TokenStream2
 ) -> TokenStream {
@@ -127,7 +134,7 @@ pub fn generate_component_provider_impl(
     return TokenStream::from(result);
 }
 
-pub fn generate_interface_provider_impl(profiles: Vec<&Path>, impl_block: ItemImpl) -> TokenStream {
+pub fn generate_interface_provider_impl(profiles: Vec<Path>, impl_block: ItemImpl) -> TokenStream {
     let interface = match impl_block.trait_ {
         Some((_, interface, _)) => interface,
         None => return TokenStream::from(Error::new(

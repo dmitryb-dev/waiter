@@ -5,7 +5,6 @@ extern crate serde;
 use waiter_di::*;
 use config::Config;
 use std::rc::Rc;
-use std::ops::Deref;
 use serde::Deserialize;
 
 trait Interface {
@@ -32,7 +31,6 @@ fn create_dependency(map: HashMap) -> Dependency {
     Dependency { map }
 }
 
-#[wrapper]
 #[derive(Debug)]
 struct HashMap(std::collections::HashMap<i32, i32>);
 
@@ -55,10 +53,10 @@ struct Comp {
     dependency_def_box: Deferred<Box<Dependency>>,
     cyclic: Deferred<Rc<dyn Interface>>,
     config: Config,
-    #[prop("int")] int_prop: usize,
-    #[prop("float")] float_prop: f32,
+    #[prop("int_v")] int_prop: usize,
+    #[prop("float_v" = 3.14)] float_prop: f32,
     str_prop: String,
-    bool_prop: bool,
+    bool_prop: Option<bool>,
     #[prop] config_object: ConfigObject
 }
 
@@ -70,7 +68,7 @@ impl Comp {
         self.dependency_def_rc.dep();
         self.dependency_def_box.dep();
         self.config.get_str("prop").unwrap();
-        println!("Comp, {}, {}, {}, {}", self.int_prop, self.float_prop, self.str_prop, self.bool_prop);
+        println!("Comp, {}, {}, {}, {:?}", self.int_prop, self.float_prop, self.str_prop, self.bool_prop);
     }
 }
 

@@ -6,15 +6,14 @@ use proc_macro::TokenStream;
 use syn::*;
 use component::generate_component_impl;
 use provider::*;
-use syn::punctuated::Punctuated;
-use syn::token::Comma;
-use syn::parse::Parser;
 use std::str::FromStr;
 use regex::Regex;
+use attr_parser::{ProvidesAttr, parse_provides_attr};
 use syn::spanned::Spanned;
 
 mod component;
 mod provider;
+mod attr_parser;
 
 #[proc_macro_attribute]
 pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -30,11 +29,10 @@ pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn provides(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let profiles = <Punctuated<Path, Comma>>::parse_terminated.parse(attr)
-        .expect("Can't parse profiles");
-    let profiles: Vec<&Path> = profiles
-        .iter()
-        .collect();
+    let ProvidesAttr { profiles } = match parse_provides_attr(attr) {
+        Ok(attr) => attr,
+        Err(error) => return error.to_compile_error().into()
+    };
 
     let mut res = remove_prop_annotation(&item);
 

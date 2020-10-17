@@ -11,3 +11,16 @@ macro_rules! inject {
         }
     }
 }
+
+#[macro_export]
+macro_rules! wrap {
+    ($wrapped_type:path as $wrapper_name:ident) => {
+        pub struct $wrapper_name($wrapped_type);
+        impl Deref for $wrapper_name {
+            type Target = $wrapped_type;
+            fn deref(&self) -> &Self::Target {
+                return &self.0;
+            }
+        }
+    }
+}

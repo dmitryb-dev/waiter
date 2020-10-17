@@ -83,15 +83,17 @@ fn parse_profile() -> String {
 pub fn parse_args() -> Config {
     let mut config = Config::new();
 
-    let mut args = args();
+    let mut args = args().peekable();
     loop {
         let arg = args.next();
         if arg.is_some() {
             let arg = arg.unwrap();
             if arg.starts_with("--") {
-                let value = args.next();
-                if value.is_some() {
-                    config.set(&arg[2..], value).unwrap();
+                let value = args.peek();
+                if value.is_none() || value.unwrap().starts_with("--") {
+                    config.set(&arg[2..], true).unwrap();
+                } else {
+                    config.set(&arg[2..], args.next().unwrap()).unwrap();
                 }
             }
         } else {

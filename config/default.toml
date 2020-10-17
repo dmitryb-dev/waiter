@@ -1,8 +1,6 @@
 profile = "dev"
 
-int = 3
-float = 3.14
+int_v = 3
 str_prop = "str"
-bool_prop = true
-prop = "prop"
+prop = "prop_value"
 i32_prop = 7
