@@ -1,13 +1,53 @@
 use proc_macro::{TokenStream};
-use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument};
+use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, ItemImpl, ImplItem, Expr, ItemFn};
 use syn::export::{TokenStream2, Span, ToTokens};
 use component::injector::{TypeToInject, RcInjector, DeferredInjector, BoxInjector, ConfigInjector,
                           Injector, PropInjector};
 use syn::export::quote;
+use syn::spanned::Spanned;
+use attr_parser::parse_provides_attr;
+use provider::generate_component_provider_impl_fn;
 
 pub(crate) mod injector;
 
-pub fn generate_component_impl(component: ItemStruct) -> Result<TokenStream, Error> {
+pub(crate) fn generate_component_for_impl(comp_impl: ItemImpl) -> Result<TokenStream, Error> {
+    for item in &comp_impl.items {
+        match item {
+            ImplItem::Method(method) => {
+                let provides_attr = method.attrs.iter()
+                    .find(|attr| attr.path.to_token_stream().to_string() == "provides".to_string());
+
+                if provides_attr.is_some() {
+                    let provides_attr = provides_attr.unwrap();
+                    let provides = if provides_attr.tokens.is_empty() {
+                        parse_provides_attr(TokenStream::new())?
+                    } else {
+                        parse_provides_attr(
+                            provides_attr.parse_args::<Expr>()
+                                .unwrap()
+                                .to_token_stream()
+                                .into()
+                        )?
+                    };
+
+                    let mut fn_tokens = method.sig.to_token_stream();
+                    fn_tokens.extend(method.block.to_token_stream());
+                    let item_fn = syn::parse::<ItemFn>(fn_tokens.into())?;
+
+                    return generate_component_provider_impl_fn(
+                        provides,
+                        item_fn,
+                        comp_impl.self_ty.to_token_stream().into()
+                    )
+                }
+            },
+            _ => {}
+        }
+    }
+    Err(Error::new(comp_impl.span(), "Constructor with #[provides] attribute is not found"))
+}
+
+pub(crate) fn generate_component_for_struct(component: ItemStruct) -> Result<TokenStream, Error> {
     let comp_name = &component.ident;
     let comp_generics = &component.generics;
 
@@ -52,7 +92,7 @@ pub fn generate_component_impl(component: ItemStruct) -> Result<TokenStream, Err
     return Ok(result.into());
 }
 
-pub fn generate_inject_dependencies_tuple(dep_number: usize) -> TokenStream2 {
+pub(crate) fn generate_inject_dependencies_tuple(dep_number: usize) -> TokenStream2 {
     let dependencies: Vec<Ident> = (0..dep_number)
         .map(|i| Ident::new(format!("dep_{}", i).as_str(), Span::call_site()))
         .collect();

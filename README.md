@@ -12,11 +12,15 @@ use waiter_di::*;
 ```
 
 See 
-[examples/get_started.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/get_started.rs) 
+[examples/1_get_started.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/1_get_started.rs) 
 for minimal example of usage.
 
 See 
-[examples/demo.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/demo.rs) 
+[examples/2_modules.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/2_modules.rs) 
+for example with modules and constructors.
+
+See 
+[examples/3_inject_options_list.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/3_inject_options_list.rs) 
 for demo of all available injection options.
 
 ## How to use
@@ -148,6 +152,24 @@ fn main() {
 }
 ```
 
+`inject!` macro can't be used for several components, so it's recommended to use it with modules:
+
+```rust
+#[module]
+struct SomeModule {
+    component: Component
+}
+#[module]
+struct RootModule {
+    some_module: SomeModule
+}
+fn main() {
+    let root_module = inject!(RootModule: profiles::Default, profiles::Dev);
+}
+```
+
+In this case `#[module]` is just a synonym for `#[component]`
+
 ## Factory functions:
 
 If you can't use `#[component]` annotation, use factory function instead:
@@ -159,7 +181,21 @@ fn create_dependency(bool_prop: bool) -> Dependency {
 }
 ```
 
-Deferred args in factory functions is unsupported. In the rest it can accept 
+To use it like a constructor, use it with #[component] on impl block:
+
+```rust
+struct Comp();
+
+#[component]
+impl Comp {
+    #[provides]
+    fn new() -> Self {
+        Self()
+    }
+}
+```
+
+`Deferred` args in factory functions is unsupported. In the rest it can accept 
 the same arg types as `#[component]`.
 
 External types isn't supported for factory functions:
@@ -182,10 +218,11 @@ fn create_external_type_dependency() -> Wrapper {
 }
 ```
 
-For convenience you can use `wrap!` macro to implement Deref automatically:
+For convenience you can use `#[wrapper]` attribute to implement Deref automatically:
 
 ```rust
-wrap!(std::collections::HashMap<i32, i32> as HashMap);
+#[wrapper]
+struct HashMap(std::collections::HashMap<i32, i32>);
 
 #[provides]
 fn create_external_type_dependency() -> HashMap {
