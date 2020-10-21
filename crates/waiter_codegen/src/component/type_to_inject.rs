@@ -1,6 +1,6 @@
 use syn::export::{TokenStream2, ToTokens};
 use attr_parser::{PropAttr, parse_prop_attr};
-use syn::{Path, Error, Type, Field, FnArg, Attribute, Pat, WhereClause};
+use syn::{Path, Error, Type, Field, FnArg, Attribute, Pat};
 use syn::spanned::Spanned;
 
 #[derive(Clone)]
@@ -69,8 +69,3 @@ impl TypeToInject {
         }
     }
 }
-
-//fn replace_type_from_where_clause(path: where_clause: Option<WhereClause>) -> &Type {
-//    where_clause.unwrap()
-//        .
-//}
