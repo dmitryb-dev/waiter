@@ -10,7 +10,7 @@ use std::str::FromStr;
 use regex::Regex;
 use attr_parser::{parse_provides_attr};
 use syn::spanned::Spanned;
-use syn::export::TokenStream2;
+use syn::export::{TokenStream2};
 
 mod component;
 mod provider;
@@ -28,7 +28,7 @@ pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let comp = syn::parse::<ItemStruct>(item.clone());
     if comp.is_ok() {
         let comp = comp.unwrap();
-        res.extend(generate_component_for_struct(comp.clone()));
+        res.extend(unwrap(generate_component_for_struct(comp.clone())));
         res.extend(generate_component_provider_impl_struct(comp.clone()));
         return res;
     }
@@ -36,7 +36,7 @@ pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
     res = remove_provides_attr(&res);
     let impl_block = syn::parse::<ItemImpl>(item.clone())
         .expect("#[component]/#[module] cant be used only on struct or impls");
-    res.extend(generate_component_for_impl(impl_block.clone()));
+    res.extend(unwrap(generate_component_for_impl(impl_block.clone())));
     return res;
 }
 
@@ -57,11 +57,11 @@ pub fn provides(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let fn_block = syn::parse::<ItemFn>(item.clone())
         .expect("#[provides] must be used only on impl blocks and factory functions");
-    res.extend(generate_component_provider_impl_fn(
+    res.extend(unwrap(generate_component_provider_impl_fn(
         provides_attr,
         fn_block.clone(),
         TokenStream2::new()
-    ));
+    )));
     return res;
 }
 
@@ -114,4 +114,11 @@ fn remove_provides_attr(item: &TokenStream) -> TokenStream {
             .replace_all(item.to_string().as_str(), "")
             .as_ref()
     ).unwrap_or_default()
+}
+
+fn unwrap(result: Result<TokenStream>) -> TokenStream {
+    match result {
+        Ok(result) => result,
+        Err(err) => err.to_compile_error().into()
+    }
 }

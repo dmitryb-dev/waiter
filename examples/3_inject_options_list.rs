@@ -49,6 +49,7 @@ struct Comp {
     dependency: Dependency,
     dependency_rc: Rc<Dependency>,
     dependency_box: Box<Dependency>,
+    dependency_def: Deferred<Dependency>,
     dependency_def_rc: Deferred<Rc<Dependency>>,
     dependency_def_box: Deferred<Box<Dependency>>,
     cyclic: Deferred<Rc<dyn Interface>>,
@@ -65,6 +66,7 @@ impl Comp {
         self.dependency.dep();
         self.dependency_rc.dep();
         self.dependency_box.dep();
+        self.dependency_def.dep();
         self.dependency_def_rc.dep();
         self.dependency_def_box.dep();
         self.config.get_str("prop").unwrap();

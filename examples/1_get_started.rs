@@ -21,9 +21,8 @@ impl Interface for InterfaceImpl {
 
 #[component]
 struct SomeComp {
-    interface_impl: InterfaceImpl,
-    interface: Rc<dyn Interface>,
-    #[prop("i32_prop")] prop: i32
+    #[prop("i32_prop")] prop: i32,
+    interface: Rc<dyn Interface>
 }
 
 fn main() {

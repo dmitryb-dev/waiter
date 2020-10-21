@@ -1,14 +1,16 @@
 use proc_macro::{TokenStream};
 use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, ItemImpl, ImplItem, Expr, ItemFn};
 use syn::export::{TokenStream2, Span, ToTokens};
-use component::injector::{TypeToInject, RcInjector, DeferredInjector, BoxInjector, ConfigInjector,
+use component::injector::{RcInjector, DeferredInjector, BoxInjector, ConfigInjector,
                           Injector, PropInjector};
 use syn::export::quote;
 use syn::spanned::Spanned;
 use attr_parser::parse_provides_attr;
 use provider::generate_component_provider_impl_fn;
+use component::type_to_inject::TypeToInject;
 
 pub(crate) mod injector;
+pub(crate) mod type_to_inject;
 
 pub(crate) fn generate_component_for_impl(comp_impl: ItemImpl) -> Result<TokenStream, Error> {
     for item in &comp_impl.items {
@@ -23,8 +25,7 @@ pub(crate) fn generate_component_for_impl(comp_impl: ItemImpl) -> Result<TokenSt
                         parse_provides_attr(TokenStream::new())?
                     } else {
                         parse_provides_attr(
-                            provides_attr.parse_args::<Expr>()
-                                .unwrap()
+                            provides_attr.parse_args::<Expr>()?
                                 .to_token_stream()
                                 .into()
                         )?
@@ -50,6 +51,7 @@ pub(crate) fn generate_component_for_impl(comp_impl: ItemImpl) -> Result<TokenSt
 pub(crate) fn generate_component_for_struct(component: ItemStruct) -> Result<TokenStream, Error> {
     let comp_name = &component.ident;
     let comp_generics = &component.generics;
+//    let comp_where = &component.generics.where_clause.unwrap().predicates[
 
     let dependencies_code = generate_dependencies_create_code(
         component.fields.iter()
@@ -169,7 +171,7 @@ fn generate_dependency_create_code(to_inject: TypeToInject, pos: usize) -> Token
             &to_inject,
             &Ident::new("container", Span::call_site())
         ))
-        .unwrap_or_else(|| quote::quote! { *waiter_di::Provider::<#type_path>::create(container) });
+        .unwrap_or_else(|| quote::quote! { waiter_di::Provider::<#type_path>::create(container) });
 
     quote::quote! {
         let #dep_var_name = #inject_code;

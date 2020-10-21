@@ -19,9 +19,22 @@ pub trait Component {
 }
 
 pub trait Provider<T: ?Sized> {
-    fn get(&mut self) -> Rc<T>;
-    fn get_ref(&mut self) -> &T;
-    fn create(&mut self) -> Box<T>;
+    type Impl;
+    fn get(&mut self) -> Rc<Self::Impl>;
+    fn create(&mut self) -> Self::Impl;
+
+    fn get_ref(&mut self) -> &Self::Impl {
+        // Value under RC is still stored in container, so it can be safely returned as a reference
+        // that has the same life as container reference
+        unsafe {
+            Rc::as_ptr(&Self::get(self))
+                .as_ref()
+                .unwrap()
+        }
+    }
+    fn create_boxed(&mut self) -> Box<Self::Impl> {
+        Box::new(Self::create(self))
+    }
 }
 
 pub struct Container<P> {

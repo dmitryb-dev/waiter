@@ -86,6 +86,7 @@ struct Comp {
 fn main() {
     let mut container = Container::<profiles::Default>::new();
     Provider::<Comp>::create(&mut container);
+    Provider::<Comp>::create_boxed(&mut container);
 }
 ```
 
@@ -119,6 +120,7 @@ Use Deferred type:
 ```rust
 #[component]
 struct Comp {
+    dependency_def: Deferred<Dependency>,
     dependency_def_rc: Deferred<Rc<Dependency>>,
     dependency_def_box: Deferred<Box<Dependency>>
 }

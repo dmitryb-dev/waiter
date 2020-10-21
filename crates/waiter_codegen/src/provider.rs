@@ -5,8 +5,8 @@ use syn::export::{TokenStream2, ToTokens};
 use std::ops::Deref;
 use component::{generate_dependencies_create_code, generate_inject_dependencies_tuple};
 use syn::spanned::Spanned;
-use component::injector::TypeToInject;
 use attr_parser::ProvidesAttr;
+use component::type_to_inject::TypeToInject;
 
 pub(crate) fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
     let comp_name = component.ident;
@@ -16,7 +16,7 @@ pub(crate) fn generate_component_provider_impl_struct(component: ItemStruct) -> 
         #comp_name::__waiter_create(self)
     };
     let inject_deferred_code = quote::quote! {
-        #comp_name::__waiter_inject_deferred(self, &*component);
+        #comp_name::__waiter_inject_deferred(self, &component);
     };
 
     generate_component_provider_impl(
@@ -114,6 +114,7 @@ pub fn generate_component_provider_impl(
 
     let result = quote::quote! {#(
         impl #provider_generics waiter_di::Provider<#comp_name> for waiter_di::Container<#profiles> {
+            type Impl = #comp_name;
             fn get(&mut self) -> std::rc::Rc<#comp_name> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
@@ -128,18 +129,8 @@ pub fn generate_component_provider_impl(
                     .downcast::<#comp_name>()
                     .unwrap();
             }
-            fn get_ref(&mut self) -> &#comp_name {
-                // Value under RC is still stored in container, so it can be safely return as reference
-                // that has the same life as container reference
-                unsafe {
-                    std::rc::Rc::as_ptr(&waiter_di::Provider::<#comp_name>::get(self))
-                        .as_ref()
-                        .unwrap()
-                }
-            }
-
-            fn create(&mut self) -> Box<#comp_name> {
-                let component = Box::new(#create_component_code);
+            fn create(&mut self) -> #comp_name {
+                let component = #create_component_code;
                 #inject_deferred_code
                 return component;
             }
@@ -165,13 +156,11 @@ pub(crate) fn generate_interface_provider_impl(provides: ProvidesAttr, impl_bloc
     };
 
     let provider_body = quote::quote! {{
-        fn get(&mut self) -> std::rc::Rc<dyn #interface> {
+        type Impl = #comp_name;
+        fn get(&mut self) -> std::rc::Rc<#comp_name> {
             waiter_di::Provider::<#comp_name>::get(self)
         }
-        fn get_ref(&mut self) -> &(dyn #interface + 'static) {
-            waiter_di::Provider::<#comp_name>::get_ref(self)
-        }
-        fn create(&mut self) -> Box<dyn #interface> {
+        fn create(&mut self) -> #comp_name {
             waiter_di::Provider::<#comp_name>::create(self)
         }
     }};
