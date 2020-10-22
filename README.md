@@ -4,7 +4,7 @@ How to use:
 
 `Cargo.toml`:
 ```toml
-waiter_di = "1.5.0"
+waiter_di = "1.6.0"
 ```
 `lib.rs` and any other file, that uses library:
 ```rust
@@ -73,6 +73,14 @@ fn main() {
     Provider::<Comp>::get(&mut container);
 }
 ```
+
+
+to use `Arc` instead of `Rc` you need to add `async` feature in cargo:
+```toml
+waiter_di = { version = "...", features = [ "async" ] }
+```
+
+Also you can use `waiter_di::Rc` type that will be compiled to `Rc` or `Arc` depending on `async` feature.
 
 To create new struct instead of getting reference:
 

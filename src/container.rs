@@ -1,11 +1,12 @@
-use std::any::{Any, TypeId, type_name};
+use std::any::{TypeId, type_name};
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::env;
 use std::marker::PhantomData;
 use config::{Config, Environment, File};
 use regex::Regex;
 use std::env::args;
+use lazy_static::lazy_static;
+use crate::{RcAny, Rc};
 
 pub mod profiles {
     pub struct Default;
@@ -40,7 +41,7 @@ pub trait Provider<T: ?Sized> {
 pub struct Container<P> {
     profile: PhantomData<P>,
     pub config: Config,
-    pub components: HashMap<TypeId, Rc<dyn Any>>
+    pub components: HashMap<TypeId, RcAny>
 }
 
 impl<P> Container<P> {

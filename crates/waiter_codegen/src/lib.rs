@@ -1,7 +1,3 @@
-extern crate proc_macro;
-extern crate syn;
-extern crate regex;
-
 use proc_macro::TokenStream;
 use syn::*;
 use component::{generate_component_for_struct, generate_component_for_impl};
@@ -90,7 +86,7 @@ pub fn wrapper(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     return TokenStream::from(quote::quote! {
         #wrapper
-        impl Deref for #wrapper_name {
+        impl std::ops::Deref for #wrapper_name {
             type Target = #type_to_wrap;
 
             fn deref(&self) -> &Self::Target {

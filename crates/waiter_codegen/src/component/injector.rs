@@ -1,7 +1,7 @@
 use syn::{Ident, Error, PathArguments};
 use syn::export::{TokenStream2, ToTokens};
 use syn::spanned::Spanned;
-use component::type_to_inject::TypeToInject;
+use crate::component::type_to_inject::TypeToInject;
 
 pub(crate) trait Injector {
     fn generate_inject_code(
@@ -18,9 +18,21 @@ impl Injector for RcInjector {
         to_inject: &TypeToInject,
         container: &Ident
     ) -> Option<TokenStream2> {
-        let referenced_type_opt = if to_inject.type_name.starts_with("std :: rc :: Rc <") {
+        #[cfg(feature = "async")]
+        const RC_FULL_TYPE: &str = "std :: sync :: Arc <";
+        #[cfg(not(feature = "async"))]
+        const RC_FULL_TYPE: &str = "std :: rc :: Rc <";
+
+        #[cfg(feature = "async")]
+        const RC_SHORT_TYPE: &str = "Arc <";
+        #[cfg(not(feature = "async"))]
+        const RC_SHORT_TYPE: &str = "Rc <";
+
+        let referenced_type_opt = if to_inject.type_name.starts_with("waiter_di :: Rc <")
+            || to_inject.type_name.starts_with(RC_FULL_TYPE) {
             Some(get_type_arg(&to_inject.type_path.segments[2].arguments))
-        } else if to_inject.type_name.starts_with("Rc <") {
+        } else if to_inject.type_name.starts_with("Rc <") ||
+            to_inject.type_name.starts_with(RC_SHORT_TYPE) {
             Some(get_type_arg(&to_inject.type_path.segments[0].arguments))
         } else {
             None

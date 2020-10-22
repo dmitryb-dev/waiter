@@ -1,6 +1,7 @@
 [package]
 name = "waiter_codegen"
-version = "1.5.0"
+version = "1.6.0"
+edition = "2018"
 description = "Macro for Waiter DI"
 repository = "https://github.com/dmitryb-dev/waiter"
 license = "MIT"
@@ -17,3 +18,6 @@ features = [ "full" ]
 
 [lib]
 proc-macro = true
+
+[features]
+async = []

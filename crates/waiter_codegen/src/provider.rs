@@ -3,10 +3,10 @@ use proc_macro::TokenStream;
 use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType, Error};
 use syn::export::{TokenStream2, ToTokens};
 use std::ops::Deref;
-use component::{generate_dependencies_create_code, generate_inject_dependencies_tuple};
+use crate::component::{generate_dependencies_create_code, generate_inject_dependencies_tuple};
 use syn::spanned::Spanned;
-use attr_parser::ProvidesAttr;
-use component::type_to_inject::TypeToInject;
+use crate::attr_parser::ProvidesAttr;
+use crate::component::type_to_inject::TypeToInject;
 
 pub(crate) fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
     let comp_name = component.ident;
@@ -115,10 +115,10 @@ pub fn generate_component_provider_impl(
     let result = quote::quote! {#(
         impl #provider_generics waiter_di::Provider<#comp_name> for waiter_di::Container<#profiles> {
             type Impl = #comp_name;
-            fn get(&mut self) -> std::rc::Rc<#comp_name> {
+            fn get(&mut self) -> waiter_di::Rc<Self::Impl> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
-                    let component = std::rc::Rc::new(#create_component_code);
+                    let component = waiter_di::Rc::new(#create_component_code);
                     self.components.insert(type_id, component.clone());
                     #inject_deferred_code
                 }
@@ -129,7 +129,7 @@ pub fn generate_component_provider_impl(
                     .downcast::<#comp_name>()
                     .unwrap();
             }
-            fn create(&mut self) -> #comp_name {
+            fn create(&mut self) -> Self::Impl {
                 let component = #create_component_code;
                 #inject_deferred_code
                 return component;
@@ -157,10 +157,10 @@ pub(crate) fn generate_interface_provider_impl(provides: ProvidesAttr, impl_bloc
 
     let provider_body = quote::quote! {{
         type Impl = #comp_name;
-        fn get(&mut self) -> std::rc::Rc<#comp_name> {
+        fn get(&mut self) -> waiter_di::Rc<Self::Impl> {
             waiter_di::Provider::<#comp_name>::get(self)
         }
-        fn create(&mut self) -> #comp_name {
+        fn create(&mut self) -> Self::Impl {
             waiter_di::Provider::<#comp_name>::create(self)
         }
     }};

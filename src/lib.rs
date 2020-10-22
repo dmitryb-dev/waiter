@@ -1,10 +1,3 @@
-extern crate proc_macro;
-extern crate config;
-extern crate regex;
-extern crate waiter_codegen;
-#[macro_use]
-extern crate lazy_static;
-
 pub mod container;
 pub mod deferred;
 
@@ -16,3 +9,18 @@ pub use waiter_codegen::*;
 pub use container::*;
 pub use deferred::*;
 pub use inject::*;
+use std::any::Any;
+
+
+#[cfg(feature = "async")]
+pub type Rc<T> = std::sync::Arc<T>;
+
+#[cfg(not(feature = "async"))]
+pub type Rc<T> = std::rc::Rc<T>;
+
+
+#[cfg(feature = "async")]
+pub type RcAny = Rc<dyn Any + Send + Sync>;
+
+#[cfg(not(feature = "async"))]
+pub type RcAny = Rc<dyn Any>;

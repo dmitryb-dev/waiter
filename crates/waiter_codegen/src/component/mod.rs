@@ -1,13 +1,13 @@
 use proc_macro::{TokenStream};
 use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, ItemImpl, ImplItem, Expr, ItemFn};
 use syn::export::{TokenStream2, Span, ToTokens};
-use component::injector::{RcInjector, DeferredInjector, BoxInjector, ConfigInjector,
+use crate::component::injector::{RcInjector, DeferredInjector, BoxInjector, ConfigInjector,
                           Injector, PropInjector};
 use syn::export::quote;
 use syn::spanned::Spanned;
-use attr_parser::parse_provides_attr;
-use provider::generate_component_provider_impl_fn;
-use component::type_to_inject::TypeToInject;
+use crate::attr_parser::parse_provides_attr;
+use crate::provider::generate_component_provider_impl_fn;
+use crate::component::type_to_inject::TypeToInject;
 
 pub(crate) mod injector;
 pub(crate) mod type_to_inject;
@@ -51,7 +51,6 @@ pub(crate) fn generate_component_for_impl(comp_impl: ItemImpl) -> Result<TokenSt
 pub(crate) fn generate_component_for_struct(component: ItemStruct) -> Result<TokenStream, Error> {
     let comp_name = &component.ident;
     let comp_generics = &component.generics;
-//    let comp_where = &component.generics.where_clause.unwrap().predicates[
 
     let dependencies_code = generate_dependencies_create_code(
         component.fields.iter()

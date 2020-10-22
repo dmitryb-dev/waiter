@@ -4,7 +4,6 @@ extern crate serde;
 
 use waiter_di::*;
 use config::Config;
-use std::rc::Rc;
 use serde::Deserialize;
 
 trait Interface {

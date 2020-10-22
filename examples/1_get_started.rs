@@ -3,9 +3,8 @@ extern crate config;
 extern crate serde;
 
 use waiter_di::*;
-use std::rc::Rc;
 
-trait Interface {
+trait Interface: Send {
     fn demo(&self);
 }
 

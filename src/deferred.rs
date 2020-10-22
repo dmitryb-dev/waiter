@@ -1,9 +1,9 @@
-use std::cell::Cell;
-use deferred::Value::{WaitingForValue, Initialized};
+use crate::deferred::Value::{WaitingForValue, Initialized};
 use std::ops::Deref;
+use std::sync::Mutex;
 
 pub struct Deferred<T> {
-    value: Cell<Value<T>>
+    value: Mutex<Value<T>>
 }
 
 pub enum Value<T> {
@@ -13,10 +13,10 @@ pub enum Value<T> {
 
 impl<T> Deferred<T> {
     pub fn new() -> Self {
-        Self { value: Cell::new(WaitingForValue) }
+        Self { value: Mutex::new(WaitingForValue) }
     }
     pub fn init(&self, value: T) {
-        self.value.set(Initialized(value));
+        *self.value.lock().unwrap() = Initialized(value);
     }
 }
 
@@ -25,7 +25,7 @@ impl<T> Deref for Deferred<T> {
 
     fn deref(&self) -> &Self::Target {
         unsafe {
-            if let Initialized(value) = &*self.value.as_ptr() {
+            if let Initialized(value) = &*(self.value.lock().unwrap().deref() as *const Value<T>) {
                 value
             } else {
                 panic!("Deferred value must be initialized before the first usage")
