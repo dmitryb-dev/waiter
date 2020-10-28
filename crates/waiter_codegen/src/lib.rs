@@ -2,11 +2,11 @@ use proc_macro::TokenStream;
 use syn::*;
 use component::{generate_component_for_struct, generate_component_for_impl};
 use provider::*;
-use std::str::FromStr;
-use regex::Regex;
 use attr_parser::{parse_provides_attr};
 use syn::spanned::Spanned;
-use syn::export::{TokenStream2};
+use syn::export::{TokenStream2, ToTokens};
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
 
 mod component;
 mod provider;
@@ -19,7 +19,7 @@ pub fn module(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let mut res: TokenStream = remove_prop_attr(&item);
+    let mut res: TokenStream = remove_attrs(item.clone());
 
     let comp = syn::parse::<ItemStruct>(item.clone());
     if comp.is_ok() {
@@ -29,7 +29,6 @@ pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
         return res;
     }
 
-    res = remove_provides_attr(&res);
     let impl_block = syn::parse::<ItemImpl>(item.clone())
         .expect("#[component]/#[module] cant be used only on struct or impls");
     res.extend(unwrap(generate_component_for_impl(impl_block.clone())));
@@ -43,7 +42,7 @@ pub fn provides(attr: TokenStream, item: TokenStream) -> TokenStream {
         Err(error) => return error.to_compile_error().into()
     };
 
-    let mut res = remove_prop_attr(&item);
+    let mut res = remove_attrs(item.clone());
 
     let impl_block = syn::parse::<ItemImpl>(item.clone());
     if impl_block.is_ok() {
@@ -96,20 +95,83 @@ pub fn wrapper(_attr: TokenStream, item: TokenStream) -> TokenStream {
     });
 }
 
-fn remove_prop_attr(item: &TokenStream) -> TokenStream {
-    TokenStream::from_str(
-        Regex::new(r"#\[prop.*?]").unwrap()
-            .replace_all(item.to_string().as_str(), "")
-            .as_ref()
-    ).unwrap_or_default()
-}
+fn remove_attrs(item: TokenStream) -> TokenStream {
+    fn attr_filter(attr: &Attribute) -> bool {
+        let attr_name = attr.path.to_token_stream().to_string();
+        attr_name.as_str() != "prop" && attr_name.as_str() != "provides"
+    };
 
-fn remove_provides_attr(item: &TokenStream) -> TokenStream {
-    TokenStream::from_str(
-        Regex::new(r"# \[provides.*?]").unwrap()
-            .replace_all(item.to_string().as_str(), "")
-            .as_ref()
-    ).unwrap_or_default()
+    let item = syn::parse::<Item>(item).unwrap();
+
+    let item = match item {
+        Item::Fn(mut fn_) => {
+            fn_.attrs.retain(attr_filter);
+            Item::Fn(fn_)
+        },
+        Item::Impl(impl_) => {
+            let mut impl_filtered = impl_.clone();
+            impl_filtered.items.clear();
+
+            for impl_item in impl_.items {
+                let impl_item = match impl_item {
+                    ImplItem::Method(method) => {
+                        let mut method_filtered = method.clone();
+                        method_filtered.attrs.retain(attr_filter);
+                        method_filtered.sig.inputs.clear();
+
+                        for fn_arg in method.sig.inputs {
+                            let filtered = match fn_arg {
+                                FnArg::Typed(mut typed) => {
+                                    typed.attrs.retain(attr_filter);
+                                    FnArg::Typed(typed)
+                                },
+                                other => other
+                            };
+                            method_filtered.sig.inputs.push(filtered);
+                        }
+
+                        ImplItem::Method(method_filtered)
+                    },
+                    other => other
+                };
+                impl_filtered.items.push(impl_item)
+            };
+
+            Item::Impl(impl_filtered)
+        },
+        Item::Struct(struct_) => {
+            let mut struct_filtered = struct_.clone();
+
+            fn filter_fields(fields: Punctuated<Field, Comma>) -> Punctuated<Field, Comma> {
+                let mut fields_filtered = fields.clone();
+                fields_filtered.clear();
+
+                for mut field in fields {
+                    field.attrs.retain(attr_filter);
+                    fields_filtered.push(field);
+                }
+
+                fields_filtered
+            }
+
+            struct_filtered.fields = match struct_.fields {
+                Fields::Named(mut fields) => {
+                    fields.named = filter_fields(fields.named.clone());
+                    Fields::Named(fields)
+                },
+                Fields::Unnamed(mut fields) => {
+                    fields.unnamed = filter_fields(fields.unnamed.clone());
+                    Fields::Unnamed(fields)
+                },
+                other => other
+            };
+
+            Item::Struct(struct_filtered)
+        },
+        other => other
+    };
+
+    item.to_token_stream().into()
 }
 
 fn unwrap(result: Result<TokenStream>) -> TokenStream {

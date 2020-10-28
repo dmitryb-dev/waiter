@@ -69,7 +69,8 @@ impl Comp {
         self.dependency_def_rc.dep();
         self.dependency_def_box.dep();
         self.config.get_str("prop").unwrap();
-        println!("Comp, {}, {}, {}, {:?}", self.int_prop, self.float_prop, self.str_prop, self.bool_prop);
+        println!("Comp, {}, {}, {}, {:?}, {}", self.int_prop, self.float_prop, self.str_prop,
+                 self.bool_prop, self.config_object.i32_prop);
     }
 }
 
