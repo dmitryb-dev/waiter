@@ -1,6 +1,6 @@
 [package]
 name = "waiter_di"
-version = "1.6.1"
+version = "1.6.2"
 edition = "2018"
 description = "Dependency injection"
 keywords = [ "dependency-injection", "inversion-of-control", "di", "ioc"]

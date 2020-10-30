@@ -1,12 +1,12 @@
-use crate::deferred::Value::{WaitingForValue, Initialized};
+use crate::deferred::DeferredValue::{WaitingForValue, Initialized};
 use std::ops::Deref;
 use std::sync::Mutex;
 
 pub struct Deferred<T> {
-    value: Mutex<Value<T>>
+    value: Mutex<DeferredValue<T>>
 }
 
-pub enum Value<T> {
+pub enum DeferredValue<T> {
     Initialized(T),
     WaitingForValue
 }
@@ -25,7 +25,7 @@ impl<T> Deref for Deferred<T> {
 
     fn deref(&self) -> &Self::Target {
         unsafe {
-            if let Initialized(value) = &*(self.value.lock().unwrap().deref() as *const Value<T>) {
+            if let Initialized(value) = &*(self.value.lock().unwrap().deref() as *const DeferredValue<T>) {
                 value
             } else {
                 panic!("Deferred value must be initialized before the first usage")
@@ -36,7 +36,7 @@ impl<T> Deref for Deferred<T> {
 
 #[cfg(test)]
 mod tests {
-    use deferred::*;
+    use crate::Deferred;
 
     #[test]
     fn deref_after_init() {
