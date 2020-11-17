@@ -6,7 +6,7 @@ use config::{Config, Environment, File};
 use regex::Regex;
 use std::env::args;
 use lazy_static::lazy_static;
-use crate::{RcAny, Rc};
+use crate::{RcAny, Wrc};
 
 pub mod profiles {
     pub struct Default;
@@ -21,14 +21,14 @@ pub trait Component {
 
 pub trait Provider<T: ?Sized> {
     type Impl;
-    fn get(&mut self) -> Rc<Self::Impl>;
+    fn get(&mut self) -> Wrc<Self::Impl>;
     fn create(&mut self) -> Self::Impl;
 
     fn get_ref(&mut self) -> &Self::Impl {
         // Value under RC is still stored in container, so it can be safely returned as a reference
         // that has the same life as container reference
         unsafe {
-            Rc::as_ptr(&Self::get(self))
+            Wrc::as_ptr(&Self::get(self))
                 .as_ref()
                 .unwrap()
         }

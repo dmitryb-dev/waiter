@@ -5,6 +5,7 @@ extern crate serde;
 use waiter_di::*;
 use config::Config;
 use serde::Deserialize;
+use std::rc::Rc;
 
 trait Interface {
     fn int(&self);
@@ -51,7 +52,7 @@ struct Comp {
     dependency_def: Deferred<Dependency>,
     dependency_def_rc: Deferred<Rc<Dependency>>,
     dependency_def_box: Deferred<Box<Dependency>>,
-    cyclic: Deferred<Rc<dyn Interface>>,
+    cyclic: Deferred<Wrc<dyn Interface>>,
     config: Config,
     #[prop("int_v")] int_prop: usize,
     #[prop("float_v" = 3.14)] float_prop: f32,

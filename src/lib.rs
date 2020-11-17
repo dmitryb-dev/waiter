@@ -13,14 +13,14 @@ use std::any::Any;
 
 
 #[cfg(feature = "async")]
-pub type Rc<T> = std::sync::Arc<T>;
+pub type Wrc<T> = std::sync::Arc<T>;
 
 #[cfg(not(feature = "async"))]
-pub type Rc<T> = std::rc::Rc<T>;
+pub type Wrc<T> = std::rc::Rc<T>;
 
 
 #[cfg(feature = "async")]
-pub type RcAny = Rc<dyn Any + Send + Sync>;
+pub type RcAny = Wrc<dyn Any + Send + Sync>;
 
 #[cfg(not(feature = "async"))]
-pub type RcAny = Rc<dyn Any>;
+pub type RcAny = Wrc<dyn Any>;

@@ -115,10 +115,10 @@ pub fn generate_component_provider_impl(
     let result = quote::quote! {#(
         impl #provider_generics waiter_di::Provider<#comp_name> for waiter_di::Container<#profiles> {
             type Impl = #comp_name;
-            fn get(&mut self) -> waiter_di::Rc<Self::Impl> {
+            fn get(&mut self) -> waiter_di::Wrc<Self::Impl> {
                 let type_id = std::any::TypeId::of::<#comp_name>();
                 if !self.components.contains_key(&type_id) {
-                    let component = waiter_di::Rc::new(#create_component_code);
+                    let component = waiter_di::Wrc::new(#create_component_code);
                     self.components.insert(type_id, component.clone());
                     #inject_deferred_code
                 }
@@ -157,7 +157,7 @@ pub(crate) fn generate_interface_provider_impl(provides: ProvidesAttr, impl_bloc
 
     let provider_body = quote::quote! {{
         type Impl = #comp_name;
-        fn get(&mut self) -> waiter_di::Rc<Self::Impl> {
+        fn get(&mut self) -> waiter_di::Wrc<Self::Impl> {
             waiter_di::Provider::<#comp_name>::get(self)
         }
         fn create(&mut self) -> Self::Impl {

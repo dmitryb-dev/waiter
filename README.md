@@ -21,7 +21,7 @@ for example with modules and constructors.
 
 See 
 [examples/3_inject_options_list.rs](https://github.com/dmitryb-dev/waiter/blob/master/examples/3_inject_options_list.rs) 
-for demo of all available injection options.
+for the demo of all available injection options.
 
 ## How to use
 
@@ -39,7 +39,7 @@ Annotate impl blocks with `#[provides]`
 impl Interface for Comp {}
 ```
 
-Create container:
+Create a container:
 
 ```rust
 fn main() {
@@ -80,7 +80,7 @@ to use `Arc` instead of `Rc` you need to add `async` feature in cargo:
 waiter_di = { version = "...", features = [ "async" ] }
 ```
 
-Also you can use `waiter_di::Rc` type that will be compiled to `Rc` or `Arc` depending on `async` feature.
+Also, you can use `waiter_di::Wrc` type that will be compiled to `Rc` or `Arc` depending on `async` feature.
 
 To create new struct instead of getting reference:
 
@@ -191,7 +191,7 @@ fn create_dependency(bool_prop: bool) -> Dependency {
 }
 ```
 
-To use it like a constructor, use it with #[component] on impl block:
+To use it like a constructor, use it with `#[component]` on impl block:
 
 ```rust
 struct Comp();
@@ -228,7 +228,7 @@ fn create_external_type_dependency() -> Wrapper {
 }
 ```
 
-For convenience you can use `#[wrapper]` attribute to implement Deref automatically:
+For convenience, you can use `#[wrapper]` attribute to implement Deref automatically:
 
 ```rust
 #[wrapper]

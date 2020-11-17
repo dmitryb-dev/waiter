@@ -11,8 +11,8 @@ pub(crate) trait Injector {
     ) -> Option<TokenStream2>;
 }
 
-pub(crate) struct RcInjector;
-impl Injector for RcInjector {
+pub(crate) struct WrcInjector;
+impl Injector for WrcInjector {
     fn generate_inject_code(
         &self,
         to_inject: &TypeToInject,
@@ -28,10 +28,10 @@ impl Injector for RcInjector {
         #[cfg(not(feature = "async"))]
         const RC_SHORT_TYPE: &str = "Rc <";
 
-        let referenced_type_opt = if to_inject.type_name.starts_with("waiter_di :: Rc <")
+        let referenced_type_opt = if to_inject.type_name.starts_with("waiter_di :: Wrc <")
             || to_inject.type_name.starts_with(RC_FULL_TYPE) {
             Some(get_type_arg(&to_inject.type_path.segments[2].arguments))
-        } else if to_inject.type_name.starts_with("Rc <") ||
+        } else if to_inject.type_name.starts_with("Wrc <") ||
             to_inject.type_name.starts_with(RC_SHORT_TYPE) {
             Some(get_type_arg(&to_inject.type_path.segments[0].arguments))
         } else {

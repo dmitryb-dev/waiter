@@ -1,7 +1,7 @@
 use proc_macro::{TokenStream};
 use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, ItemImpl, ImplItem, Expr, ItemFn};
 use syn::export::{TokenStream2, Span, ToTokens};
-use crate::component::injector::{RcInjector, DeferredInjector, BoxInjector, ConfigInjector,
+use crate::component::injector::{WrcInjector, DeferredInjector, BoxInjector, ConfigInjector,
                           Injector, PropInjector};
 use syn::export::quote;
 use syn::spanned::Spanned;
@@ -160,7 +160,7 @@ fn generate_dependency_create_code(to_inject: TypeToInject, pos: usize) -> Token
 
     let mut injectors: Vec<Box<dyn Injector>> = Vec::new();
     injectors.push(Box::new(DeferredInjector));
-    injectors.push(Box::new(RcInjector));
+    injectors.push(Box::new(WrcInjector));
     injectors.push(Box::new(BoxInjector));
     injectors.push(Box::new(ConfigInjector));
     injectors.push(Box::new(PropInjector));
