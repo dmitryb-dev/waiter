@@ -106,6 +106,10 @@ fn remove_attrs(item: TokenStream) -> TokenStream {
     let item = match item {
         Item::Fn(mut fn_) => {
             fn_.attrs.retain(attr_filter);
+            fn_.sig.inputs.iter_mut()
+                .for_each(|arg| if let FnArg::Typed(path) = arg {
+                    path.attrs.retain(attr_filter);
+                });
             Item::Fn(fn_)
         },
         Item::Impl(impl_) => {
