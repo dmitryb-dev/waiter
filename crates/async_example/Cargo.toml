@@ -1,0 +1,13 @@
+[package]
+name = "async_example"
+version = "0.0.1"
+authors = ["schneidersteve"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+waiter_di = { path = "../../", version = "1.6.4" }
+
+async-trait = "0.1"
+async-std = { version = "1.8", features = ["attributes"] }
