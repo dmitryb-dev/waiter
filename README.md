@@ -4,7 +4,7 @@ How to use:
 
 `Cargo.toml`:
 ```toml
-waiter_di = "1.6.2"
+waiter_di = "1.6.4"
 ```
 `lib.rs` or any other file, that uses library:
 ```rust
