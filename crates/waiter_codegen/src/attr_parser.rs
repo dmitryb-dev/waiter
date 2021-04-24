@@ -1,10 +1,12 @@
 use syn::{Path, Error, Attribute};
 use syn::punctuated::Punctuated;
 use syn::parse::Parser;
-use syn::export::{TokenStream, TokenStream2, ToTokens};
 use syn::token::{Comma};
 use syn::{LitStr, ExprAssign};
 use syn::parse_macro_input::parse;
+use proc_macro::TokenStream;
+use proc_macro2::{TokenStream as TokenStream2};
+use quote::ToTokens;
 
 pub(crate) struct ProvidesAttr {
     pub profiles: Vec<Path>

@@ -266,6 +266,7 @@ checksum = "914b1a6776c4c929a602fafd8bc742e06365d4bcbe48c30f9cca5824f70dc9dd"
 name = "waiter_codegen"
 version = "1.6.4"
 dependencies = [
+ "proc-macro2",
  "quote",
  "regex",
  "syn",

@@ -1,9 +1,10 @@
 use proc_macro::{TokenStream};
+use proc_macro2::{TokenStream as TokenStream2, Span};
+use quote;
+use quote::ToTokens;
 use syn::{Ident, ItemStruct, Fields, Field, Type, Error, PathArguments, GenericArgument, ItemImpl, ImplItem, Expr, ItemFn};
-use syn::export::{TokenStream2, Span, ToTokens};
 use crate::component::injector::{WrcInjector, DeferredInjector, BoxInjector, ConfigInjector,
                           Injector, PropInjector};
-use syn::export::quote;
 use syn::spanned::Spanned;
 use crate::attr_parser::parse_provides_attr;
 use crate::provider::generate_component_provider_impl_fn;

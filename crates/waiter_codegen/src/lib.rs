@@ -1,10 +1,11 @@
 use proc_macro::TokenStream;
+use proc_macro2::{TokenStream as TokenStream2};
+use quote::ToTokens;
 use syn::*;
 use component::{generate_component_for_struct, generate_component_for_impl};
 use provider::*;
 use attr_parser::{parse_provides_attr};
 use syn::spanned::Spanned;
-use syn::export::{TokenStream2, ToTokens};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 

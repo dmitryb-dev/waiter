@@ -1,7 +1,8 @@
 use proc_macro::TokenStream;
+use proc_macro2::{TokenStream as TokenStream2};
+use quote::ToTokens;
 
 use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType, Error};
-use syn::export::{TokenStream2, ToTokens};
 use std::ops::Deref;
 use crate::component::{generate_dependencies_create_code, generate_inject_dependencies_tuple};
 use syn::spanned::Spanned;

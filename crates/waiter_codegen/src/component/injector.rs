@@ -1,5 +1,6 @@
+use proc_macro2::{TokenStream as TokenStream2};
+use quote::ToTokens;
 use syn::{Ident, Error, PathArguments};
-use syn::export::{TokenStream2, ToTokens};
 use syn::spanned::Spanned;
 use crate::component::type_to_inject::TypeToInject;
 
