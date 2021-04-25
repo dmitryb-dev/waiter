@@ -100,7 +100,7 @@ fn remove_attrs(item: TokenStream) -> TokenStream {
     fn attr_filter(attr: &Attribute) -> bool {
         let attr_name = attr.path.to_token_stream().to_string();
         attr_name.as_str() != "prop" && attr_name.as_str() != "provides"
-    };
+    }
 
     let item = syn::parse::<Item>(item).unwrap();
 
