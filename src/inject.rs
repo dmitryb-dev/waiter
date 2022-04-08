@@ -22,5 +22,5 @@ macro_rules! wrap {
                 return &self.0;
             }
         }
-    }
+    };
 }
