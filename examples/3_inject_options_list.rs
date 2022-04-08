@@ -1,11 +1,11 @@
-extern crate waiter_di;
 extern crate config;
 extern crate serde;
+extern crate waiter_di;
 
-use waiter_di::*;
 use config::Config;
 use serde::Deserialize;
 use std::rc::Rc;
+use waiter_di::*;
 
 trait Interface {
     fn int(&self);
@@ -16,7 +16,7 @@ trait Interface2 {
 }
 
 struct Dependency {
-    map: HashMap
+    map: HashMap,
 }
 
 impl Dependency {
@@ -41,7 +41,7 @@ fn create_external_type_dependency() -> HashMap {
 
 #[derive(Debug, Deserialize)]
 struct ConfigObject {
-    i32_prop: i32
+    i32_prop: i32,
 }
 
 #[component]
@@ -54,11 +54,14 @@ struct Comp {
     dependency_def_box: Deferred<Box<Dependency>>,
     cyclic: Deferred<Wrc<dyn Interface>>,
     config: Config,
-    #[prop("int_v")] int_prop: usize,
-    #[prop("float_v" = 3.14)] float_prop: f32,
+    #[prop("int_v")]
+    int_prop: usize,
+    #[prop("float_v" = 3.14)]
+    float_prop: f32,
     str_prop: String,
     bool_prop: Option<bool>,
-    #[prop] config_object: ConfigObject
+    #[prop]
+    config_object: ConfigObject,
 }
 
 impl Comp {
@@ -69,9 +72,15 @@ impl Comp {
         self.dependency_def.dep();
         self.dependency_def_rc.dep();
         self.dependency_def_box.dep();
-        self.config.get_str("prop").unwrap();
-        println!("Comp, {}, {}, {}, {:?}, {}", self.int_prop, self.float_prop, self.str_prop,
-                 self.bool_prop, self.config_object.i32_prop);
+        self.config.get_string("prop").unwrap();
+        println!(
+            "Comp, {}, {}, {}, {:?}, {}",
+            self.int_prop,
+            self.float_prop,
+            self.str_prop,
+            self.bool_prop,
+            self.config_object.i32_prop
+        );
     }
 }
 
@@ -89,7 +98,6 @@ impl Interface2 for Comp {
     }
 }
 
-
 fn main() {
     let mut container = Container::<profiles::Default>::new();
 
@@ -101,14 +109,12 @@ fn main() {
     let comp = Provider::<dyn Interface>::get_ref(&mut container);
     comp.int();
 
-
     let mut container = Container::<profiles::Dev>::new();
     let comp = Provider::<dyn Interface>::get_ref(&mut container);
     comp.int();
 
     let comp = Provider::<dyn Interface2>::get_ref(&mut container);
     comp.int2();
-
 
     println!("Using profile: {}", APP_PROFILE.as_str());
     let comp = inject!(Comp: profiles::Default, profiles::Dev);
