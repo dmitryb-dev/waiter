@@ -23,7 +23,7 @@ impl Interface for InterfaceImpl {
 #[component]
 struct SomeComp {
     #[prop("i32_prop")] prop: i32,
-    interface: Rc<dyn Interface>
+    interface: Rc<dyn Interface>,
 }
 
 fn main() {

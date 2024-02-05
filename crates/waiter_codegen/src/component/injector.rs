@@ -1,23 +1,25 @@
-use proc_macro2::{TokenStream as TokenStream2};
+use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::{Ident, Error, PathArguments};
+use syn::{Error, Ident, PathArguments};
 use syn::spanned::Spanned;
+
 use crate::component::type_to_inject::TypeToInject;
 
 pub(crate) trait Injector {
     fn generate_inject_code(
         &self,
         to_inject: &TypeToInject,
-        container: &Ident
+        container: &Ident,
     ) -> Option<TokenStream2>;
 }
 
 pub(crate) struct WrcInjector;
+
 impl Injector for WrcInjector {
     fn generate_inject_code(
         &self,
         to_inject: &TypeToInject,
-        container: &Ident
+        container: &Ident,
     ) -> Option<TokenStream2> {
         #[cfg(feature = "async")]
         const RC_FULL_TYPE: &str = "std :: sync :: Arc <";
@@ -47,17 +49,18 @@ impl Injector for WrcInjector {
 
 
 pub(crate) struct BoxInjector;
+
 impl Injector for BoxInjector {
     fn generate_inject_code(
         &self,
         to_inject: &TypeToInject,
-        container: &Ident
+        container: &Ident,
     ) -> Option<TokenStream2> {
         if to_inject.type_name.starts_with("Box <") {
             let referenced_type = get_type_arg(&to_inject.type_path.segments[0].arguments);
             return Some(quote::quote! {
                 Box::new(waiter_di::Provider::<#referenced_type>::create(#container))
-            })
+            });
         }
 
         None
@@ -66,11 +69,12 @@ impl Injector for BoxInjector {
 
 
 pub(crate) struct DeferredInjector;
+
 impl Injector for DeferredInjector {
     fn generate_inject_code(
         &self,
         to_inject: &TypeToInject,
-        _container: &Ident
+        _container: &Ident,
     ) -> Option<TokenStream2> {
         let referenced_type_opt = if to_inject.type_name.starts_with("waiter_di :: Deferred <") {
             Some(get_type_arg(&to_inject.type_path.segments[1].arguments))
@@ -88,15 +92,16 @@ impl Injector for DeferredInjector {
 
 
 pub(crate) struct ConfigInjector;
+
 impl Injector for ConfigInjector {
     fn generate_inject_code(
         &self,
         to_inject: &TypeToInject,
-        container: &Ident
+        container: &Ident,
     ) -> Option<TokenStream2> {
-        if to_inject.type_name == "Config".to_string()
-            || to_inject.type_name == "config :: Config".to_string() {
-            return Some(quote::quote! { #container.config.clone() })
+        if to_inject.type_name == *"Config"
+            || to_inject.type_name == *"config :: Config" {
+            return Some(quote::quote! { #container.config.clone() });
         }
 
         None
@@ -105,11 +110,12 @@ impl Injector for ConfigInjector {
 
 
 pub(crate) struct PropInjector;
+
 impl Injector for PropInjector {
     fn generate_inject_code(
         &self,
         to_inject: &TypeToInject,
-        container: &Ident
+        container: &Ident,
     ) -> Option<TokenStream2> {
         let (prop_name_opt, default_value_code) = if to_inject.prop_attr.is_some() {
             let prop_attr = to_inject.prop_attr.clone().unwrap();
@@ -120,7 +126,7 @@ impl Injector for PropInjector {
 
             let default_value_code = prop_attr.default_value.clone()
                 .map(|default_value| quote::quote! { .or_else(|| Some(#default_value)) })
-                .unwrap_or(quote::quote! {});
+                .unwrap_or_default();
 
             (prop_name_opt, default_value_code)
         } else {
@@ -157,7 +163,7 @@ impl Injector for PropInjector {
                             type_path.clone(),
                             type_name.clone(),
                             prop_name.to_string(),
-                            quote::quote! { value }
+                            quote::quote! { value },
                         );
 
                         quote::quote! {
@@ -177,7 +183,7 @@ impl Injector for PropInjector {
                     let type_name = to_inject.type_name.clone();
                     let type_path = to_inject.type_path.clone();
                     Some(quote::quote! {
-                        #container.config.clone().try_into::<#type_path>()
+                        #container.config.clone().try_deserialize::<#type_path>()
                             .expect(format!("Can't parse config as '{}'", #type_name).as_str())
                     })
                 } else {
@@ -188,19 +194,20 @@ impl Injector for PropInjector {
 }
 
 trait PropExtractor {
-    fn generate_extract_method(&self, type_name: String, ) -> Option<TokenStream2>;
+    fn generate_extract_method(&self, type_name: String) -> Option<TokenStream2>;
     fn generate_convert_code(
         &self,
         _type_path: TokenStream2,
         _type_name: String,
         _prop_name: String,
-        extract_code: TokenStream2
+        extract_code: TokenStream2,
     ) -> TokenStream2 {
         extract_code
     }
 }
 
 struct SafeCastPropExtractor;
+
 impl PropExtractor for SafeCastPropExtractor {
     fn generate_extract_method(&self, type_name: String) -> Option<TokenStream2> {
         match type_name.as_str() {
@@ -214,13 +221,14 @@ impl PropExtractor for SafeCastPropExtractor {
         type_path: TokenStream2,
         _type_name: String,
         _prop_name: String,
-        value: TokenStream2
+        value: TokenStream2,
     ) -> TokenStream2 {
         quote::quote! { #type_path::from(#value) }
     }
 }
 
 struct UnsafeCastPropExtractor;
+
 impl PropExtractor for UnsafeCastPropExtractor {
     fn generate_extract_method(&self, type_name: String) -> Option<TokenStream2> {
         match type_name.as_str() {
@@ -235,7 +243,7 @@ impl PropExtractor for UnsafeCastPropExtractor {
         type_path: TokenStream2,
         type_name: String,
         prop_name: String,
-        value: TokenStream2
+        value: TokenStream2,
     ) -> TokenStream2 {
         quote::quote! {
             <#type_path as std::convert::TryFrom<i64>>::try_from(#value)
@@ -245,12 +253,13 @@ impl PropExtractor for UnsafeCastPropExtractor {
 }
 
 struct AsCastPropExtractor;
+
 impl PropExtractor for AsCastPropExtractor {
     fn generate_extract_method(&self, type_name: String) -> Option<TokenStream2> {
         match type_name.as_str() {
             "i64" => Some(quote::quote! { get_int }),
             "f64" | "f32" => Some(quote::quote! { get_float }),
-            "String" => Some(quote::quote! { get_str }),
+            "String" => Some(quote::quote! { get_string }),
             "bool" => Some(quote::quote! { get_bool }),
             _ => None
         }
@@ -261,7 +270,7 @@ impl PropExtractor for AsCastPropExtractor {
         type_path: TokenStream2,
         _type_name: String,
         _prop_name: String,
-        value: TokenStream2
+        value: TokenStream2,
     ) -> TokenStream2 {
         quote::quote! {
             #value as #type_path
