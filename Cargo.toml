@@ -13,7 +13,7 @@ authors = [ "dmitryb.dev@gmail.com" ]
 members = [ "crates/*" ]
 
 [dependencies]
-waiter_codegen = { path = "crates/waiter_codegen", version = "1.6.5" }
+waiter_codegen = { path = "crates/waiter_codegen", version = "1.6.6" }
 config = "0.14.0"
 serde = { version = "1.0.196", features = [ "derive" ] }
 regex = "1.10.3"

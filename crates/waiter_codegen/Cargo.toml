@@ -1,6 +1,6 @@
 [package]
 name = "waiter_codegen"
-version = "1.6.5"
+version = "1.6.6"
 edition = "2018"
 description = "Macro for Waiter DI"
 repository = "https://github.com/dmitryb-dev/waiter"
