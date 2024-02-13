@@ -1,6 +1,6 @@
 [package]
 name = "waiter_di"
-version = "1.6.5"
+version = "1.6.6"
 edition = "2018"
 description = "Dependency injection"
 keywords = [ "dependency-injection", "inversion-of-control", "di", "ioc"]
@@ -14,11 +14,11 @@ members = [ "crates/*" ]
 
 [dependencies]
 waiter_codegen = { path = "crates/waiter_codegen", version = "1.6.5" }
-config = "0.9"
-serde = { version = "1.0.115", features = [ "derive" ] }
-regex = "1.3.9"
+config = "0.14.0"
+serde = { version = "1.0.196", features = [ "derive" ] }
+regex = "1.10.3"
 lazy_static = "1.4.0"
-log = "0.4.11"
+log = "0.4.20"
 
 [features]
 async = [ "waiter_codegen/async" ]

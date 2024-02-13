@@ -1,12 +1,13 @@
 use proc_macro::TokenStream;
-use proc_macro2::{TokenStream as TokenStream2};
-use quote::ToTokens;
-
-use syn::{GenericParam, ItemImpl, ItemStruct, Path, Type, ItemFn, ReturnType, Error};
 use std::ops::Deref;
-use crate::component::{generate_dependencies_create_code, generate_inject_dependencies_tuple};
+
+use proc_macro2::TokenStream as TokenStream2;
+use quote::ToTokens;
+use syn::{Error, GenericParam, ItemFn, ItemImpl, ItemStruct, Path, ReturnType, Type};
 use syn::spanned::Spanned;
+
 use crate::attr_parser::ProvidesAttr;
+use crate::component::{generate_dependencies_create_code, generate_inject_dependencies_tuple};
 use crate::component::type_to_inject::TypeToInject;
 
 pub(crate) fn generate_component_provider_impl_struct(component: ItemStruct) -> TokenStream {
@@ -25,14 +26,14 @@ pub(crate) fn generate_component_provider_impl_struct(component: ItemStruct) -> 
         component.generics.params.iter().collect(),
         vec!(),
         create_component_code,
-        inject_deferred_code
+        inject_deferred_code,
     )
 }
 
 pub(crate) fn generate_component_provider_impl_fn(
     provides: ProvidesAttr,
     factory: ItemFn,
-    force_type: TokenStream2
+    force_type: TokenStream2,
 ) -> Result<TokenStream, Error> {
     let comp_name = if force_type.is_empty() {
         let ret_value = if let ReturnType::Type(_, type_) = &factory.sig.output {
@@ -41,14 +42,14 @@ pub(crate) fn generate_component_provider_impl_fn(
             } else {
                 return Err(Error::new(
                     factory.span(),
-                    "Unsupported return type for factory function"
-                ))
+                    "Unsupported return type for factory function",
+                ));
             }
         } else {
             return Err(Error::new(
                 factory.span(),
-                "Return type must be specified for factory function"
-            ))
+                "Return type must be specified for factory function",
+            ));
         };
         ret_value
     } else {
@@ -81,11 +82,11 @@ pub(crate) fn generate_component_provider_impl_fn(
     Ok(generate_component_provider_impl(
         comp_name,
         factory.sig.generics.params.iter()
-            .filter(|p| if let GenericParam::Lifetime(_) = p { true } else { false })
+            .filter(|p| matches!(p, GenericParam::Lifetime(_)))
             .collect(),
         provides.profiles,
         create_component_code,
-        inject_deferred_code
+        inject_deferred_code,
     ))
 }
 
@@ -94,7 +95,7 @@ pub fn generate_component_provider_impl(
     comp_generics: Vec<&GenericParam>,
     profiles: Vec<Path>,
     create_component_code: TokenStream2,
-    inject_deferred_code: TokenStream2
+    inject_deferred_code: TokenStream2,
 ) -> TokenStream {
     let (profiles, provider_generics) = if profiles.is_empty() {
         let generic_profile = quote::quote! { PROFILE };
@@ -138,7 +139,7 @@ pub fn generate_component_provider_impl(
         }
     )*};
 
-    return TokenStream::from(result);
+    TokenStream::from(result)
 }
 
 pub(crate) fn generate_interface_provider_impl(provides: ProvidesAttr, impl_block: ItemImpl) -> TokenStream {
@@ -146,14 +147,14 @@ pub(crate) fn generate_interface_provider_impl(provides: ProvidesAttr, impl_bloc
         Some((_, interface, _)) => interface,
         None => return TokenStream::from(Error::new(
             impl_block.span(),
-            "#[provides] can be used only on impl blocks for traits"
+            "#[provides] can be used only on impl blocks for traits",
         ).to_compile_error())
     };
 
     let comp_name = if let Type::Path(comp_path) = *impl_block.self_ty {
         comp_path.path.segments.first().unwrap().ident.clone()
     } else {
-        return TokenStream::from(Error::new(impl_block.self_ty.span(), "Failed to create provider").to_compile_error())
+        return TokenStream::from(Error::new(impl_block.self_ty.span(), "Failed to create provider").to_compile_error());
     };
 
     let provider_body = quote::quote! {{
@@ -177,5 +178,5 @@ pub(crate) fn generate_interface_provider_impl(provides: ProvidesAttr, impl_bloc
         }
     };
 
-    return TokenStream::from(result);
+    TokenStream::from(result)
 }
